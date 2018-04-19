@@ -1,0 +1,14 @@
+backups/
+emacs-backup/
+auto-save-list/
+places
+recentf*
+undo/
+bookmarks
+elpa/
+semanticdb/
+*.dat
+el-get/
+history
+emacs-powerline/
+settings.el
