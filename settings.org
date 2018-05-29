@@ -106,7 +106,11 @@ text and copying to the killring."
 	 (message "Copied %s to killring (clipboard)" mytmpid)
        ))
 #+END_SRC
-
+*** startup 
+#+BEGIN_SRC emacs-lisp
+(setq org-startup-indented t)
+(setq auto-fill-mode 1)
+#+END_SRCa
 * Helper hydras
 ** Fonts hydra
 #+BEGIN_SRC emacs-lisp
@@ -390,55 +394,20 @@ Frames: _f_rame new  _df_ delete
   ("m" yas/minor-mode)
   ("a" yas-reload-all))
 #+END_SRC
-
-* Org mode
-** Options
+** persp helper hydra
 #+BEGIN_SRC emacs-lisp
+(desktop-save-mode 1)
+(defhydra helper-hydra-persp (:color blue :hint nil)
+  ("`" persp-switch "perspective switch")
+  ("i" persp-import "perspective import")
+  ("n" persp-next "perspective next")
+("1" persp-switch-last "last"))
 
-
-(setq org-enforce-todo-dependencies t)
-(setq org-track-ordered-property-with-tag t)
-(setq org-enforce-todo-checkbox-dependencies t)
-
-(setq org-clock-into-drawer "CLOCKING")
-
-;(add-to-list 'org-drawers "CLOCKING")
-;(add-to-list 'org-drawers "LOGBOOK")
-
-
-
-;; (global-set-key (kbd "") 'my/copy-id-to-clipboard)
-
-
-(setq org-agenda-view-columns-initially t)
-(defun org-agenda-show-tags-in-columns (&optional arg)
-  (interactive "P")
-  (org-agenda arg "t"))
-
-#+END_SRC
-** capture templates
-#+BEGIN_SRC emacs-lisp
-(setq org-capture-templates (quote
-    (("t" "Todo" entry
-      (file+headline "~/org/general.org" "Tasks")
-      (file "~/org/templates/todo")
-      :empty-lines-after 1)
-     ("b" "Book" entry
-      (file+headline "~/org/general.org" "Books")
-      (file "~/org/templates/book")
-      :empty-lines-after 1)
-     ("g" "General note" entry
-      (file+headline "~/org/general.org" "Capture")
-      (file "~/org/templates/general")
-      :empty-lines-after 1))))
-#+END_SRC
-** Agenda files
-#+BEGIN_SRC emacs-lisp
-(setq org-agenda-files (quote ("~/org")))
 #+END_SRC
 
 * Global keybindings
 #+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "<Scroll_Lock>") 'toggle-selective-display)
 (global-set-key (kbd "<f12>") 'helm-mini)
 (global-set-key (kbd "<C-f12>") 'fasd-find-file)
 (global-set-key (kbd "C-j") 'join-line)
@@ -491,8 +460,7 @@ Frames: _f_rame new  _df_ delete
   ;; define a prefix keymap
   (define-prefix-command 'rshiftmap)
   (define-key rshiftmap [? ] 'er/expand-region)
-
-  (define-key rshiftmap [f9 ? ] 'er/contract-region)
+  (define-key rshiftmap [f9] 'hs-toggle-hiding)
   (define-key rshiftmap (kbd "c") 'aya-create)
   (define-key rshiftmap (kbd "e") 'aya-expand)
 
@@ -500,7 +468,7 @@ Frames: _f_rame new  _df_ delete
   (define-key rshiftmap (kbd "s") 'magit-status)
   (define-key rshiftmap (kbd "a") 'magit-dispatch-popup)
   (define-key rshiftmap (kbd "x") 'magit-commit)
-
+  (define-key rshiftmap (kbd "1") 'hs-toggle-hiding)
 
   (define-key rshiftmap [?\r] 'helm-do-grep-ag)
 
@@ -513,6 +481,52 @@ Frames: _f_rame new  _df_ delete
 
   ;; (define-key rshiftmap [f9 f9] '123-menu-display-menu-marc-menu-root)) ;
 
+#+END_SRC
+
+* Org mode
+** Options
+#+BEGIN_SRC emacs-lisp
+
+
+(setq org-enforce-todo-dependencies t)
+(setq org-track-ordered-property-with-tag t)
+(setq org-enforce-todo-checkbox-dependencies t)
+
+(setq org-clock-into-drawer "CLOCKING")
+
+;(add-to-list 'org-drawers "CLOCKING")
+;(add-to-list 'org-drawers "LOGBOOK")
+
+
+
+;; (global-set-key (kbd "") 'my/copy-id-to-clipboard)
+
+
+(setq org-agenda-view-columns-initially t)
+(defun org-agenda-show-tags-in-columns (&optional arg)
+  (interactive "P")
+  (org-agenda arg "t"))
+
+#+END_SRC
+** capture templates
+#+BEGIN_SRC emacs-lisp
+(setq org-capture-templates (quote
+    (("t" "Todo" entry
+      (file+headline "~/org/general.org" "Tasks")
+      (file "~/org/templates/todo")
+      :empty-lines-after 1)
+     ("b" "Book" entry
+      (file+headline "~/org/general.org" "Books")
+      (file "~/org/templates/book")
+      :empty-lines-after 1)
+     ("g" "General note" entry
+      (file+headline "~/org/general.org" "Capture")
+      (file "~/org/templates/general")
+      :empty-lines-after 1))))
+#+END_SRC
+** Agenda files
+#+BEGIN_SRC emacs-lisp
+(setq org-agenda-files (quote ("~/org")))
 #+END_SRC
 
 * Syntax highlighting in SRC blocks
@@ -542,17 +556,20 @@ Frames: _f_rame new  _df_ delete
   ("<f5>" my/copy-id-to-clipboard "Copy headline ID")
   ("c" org-capture "Capture note")
   
-("<f2>" org-clock-out "Clock out")
+  ("<f2>" org-clock-out "Clock out")
   ("I" my/org-add-ids-to-headlines-in-file "ID all headlines")  
   ("f" helper-hydra-fonts/body "Change fonts")
-
+  
   ("<f3>" org-clock-in-last "Clock in last")
   ("1" helper-hydra-org-agenda/body "Agenda options")
   ("a" org-agenda "Agenda show")
-
+  ("TAB" outline-next-visible-heading "next heading")
+  ("4" outline-hide-entry "hide")
   ("t" org-agenda-show-tags-in-columns  "Agenda tags")
   ("E" helper-hydra-ediff/body  "Ediff")
   ("r" helper-hydra-rectangle/body "Rectangle hydra")
+  
+  ("`" helper-hydra-persp/body "perspective     ")
   ("s" helper-hydra-yasnippet/body "yasnippet hydra")
   
 ("w" helper-hydra-window/body "Window hydra")
@@ -566,6 +583,22 @@ Frames: _f_rame new  _df_ delete
 (global-set-key (kbd "<f1>") 'hydra-f1/body)
 #+END_SRC
 
+* hide-show mode 
+
+(define-globalized-minor-mode global-hs-minor-mode
+  hs-minor-mode hs-minor-mode)
+
+(global-hs-minor-mode 1)
+#+BEGIN_SRC emacs-lisp
+    (defun toggle-selective-display (column)
+      (interactive "P")
+      (set-selective-display
+       (or column
+           (unless selective-display
+             (1+ (current-column))))))
+#+END_SRC
+
+* 
 * Visual setting
 ** Theme zenburn
 #+BEGIN_SRC emacs-lisp
@@ -625,12 +658,12 @@ Frames: _f_rame new  _df_ delete
 #+END_SRC
 
 * Completion
-** Autocomplete options
+** Auths-ocomplete options
 #+BEGIN_SRC emacs-lisp
 
 (ac-config-default)
 
-(setq ac-auto-show-menu    0.1)
+(setq ac-auto-show-menu    0.1) 
 (setq ac-delay             0.1)
 (setq ac-menu-height       20)
 (setq ac-auto-start t)
@@ -789,6 +822,7 @@ Frames: _f_rame new  _df_ delete
 ;; into one dir
 
 (setq backup-directory-alist '(("" . "~/.emacs.d/emacs-backup")))
+
 (setq make-backup-files nil) ; stop creating backup~ files
 (setq auto-save-default nil) ; stop creating #autosave# files
 
@@ -810,3 +844,9 @@ Frames: _f_rame new  _df_ delete
 
 #+END_SRC
 
+* Pers mode
+#+BEGIN_SRC emacs-lisp
+
+  
+
+#+END_SRC 
