@@ -12,3 +12,5 @@ el-get/
 history
 emacs-powerline/
 settings.el
+/.emacs.desktop
+persp-confs/
