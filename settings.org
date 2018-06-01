@@ -3,6 +3,13 @@
 ** Reload init.el 
 #+BEGIN_SRC emacs-lisp
 (defun helper-reload-settings () (interactive) (eval '(load-file "~/.emacs.d/init.el"))) ;; Reload init.el
+(defun windmove-emacs-or-tmux(dir tmux-cmd)
+  (interactive)
+  (if (ignore-errors (funcall (intern (concat "windmove-" dir))))
+     nil                       ;; Moving within emacs
+     (shell-command tmux-cmd)) ;; At edges, send command to tmux
+)
+
 #+END_SRC       
 ** Newline without break of line
 #+BEGIN_SRC emacs-lisp
@@ -110,7 +117,8 @@ text and copying to the killring."
 #+BEGIN_SRC emacs-lisp
 (setq org-startup-indented t)
 (setq auto-fill-mode 1)
-#+END_SRCa
+#+
+
 * Helper hydras
 ** Fonts hydra
 #+BEGIN_SRC emacs-lisp
@@ -412,8 +420,8 @@ Frames: _f_rame new  _df_ delete
 (global-set-key (kbd "<C-f12>") 'fasd-find-file)
 (global-set-key (kbd "C-j") 'join-line)
 #+END_SRC
-
-** rctrl map
+        
+** rctarl map
 :PROPERTIES:
 :ID:       ba6d5a1c-53f1-47c7-abfe-714c2112381f
 :END:                   
@@ -470,6 +478,14 @@ Frames: _f_rame new  _df_ delete
   (define-key rshiftmap (kbd "x") 'magit-commit)
   (define-key rshiftmap (kbd "1") 'hs-toggle-hiding)
 
+
+  (define-key rshiftmap (kbd "<up>") (lambda() (interactive) (windmove-emacs-or-tmux "up" "tmux select-pane -U")))
+  (define-key rshiftmap (kbd "<down>") (lambda() (interactive) (windmove-emacs-or-tmux "down" "tmux select-pane -D")))
+
+  (define-key rshiftmap (kbd "<right>") (lambda() (interactive) (windmove-emacs-or-tmux "right" "tmux select-pane -R")))
+  (define-key rshiftmap (kbd "<left>") (lambda() (interactive) (windmove-emacs-or-tmux "left" "tmux select-pane -L")))
+
+  
   (define-key rshiftmap [?\r] 'helm-do-grep-ag)
 
   (define-key rshiftmap (kbd "\\") 'ripgrep-regexp)
@@ -486,11 +502,9 @@ Frames: _f_rame new  _df_ delete
 * Org mode
 ** Options
 #+BEGIN_SRC emacs-lisp
-
-
-(setq org-enforce-todo-dependencies t)
+;; (setq org-enforce-todo-dependencies t)
 (setq org-track-ordered-property-with-tag t)
-(setq org-enforce-todo-checkbox-dependencies t)
+;; (setq org-enforce-todo-checkbox-dependencies t)
 
 (setq org-clock-into-drawer "CLOCKING")
 
@@ -642,11 +656,11 @@ Frames: _f_rame new  _df_ delete
 #+END_SRC
 
 ** org-bullets
-#+BEGIN_SRC emacs-lisp
++BEGIN_SRC emacs-lisp
 (require 'org-bullets)
 (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 
-#+END_SRC
++END_SRC
 * Coding style
 #+BEGIN_SRC emacs-lisp
 
@@ -766,12 +780,6 @@ Frames: _f_rame new  _df_ delete
 (set-face-foreground 'vertical-border "black")
 (add-hook 'window-configuration-change-hook 'my-change-window-divider)
 
-(defun windmove-emacs-or-tmux(dir tmux-cmd)
-  (interactive)
-  (if (ignore-errors (funcall (intern (concat "windmove-" dir))))
-     nil                       ;; Moving within emacs
-     (shell-command tmux-cmd)) ;; At edges, send command to tmux
-)
 
 (add-hook 'ag-mode-hook 'winnow-mode)
 (add-hook 'compilation-mode-hook 'winnow-mode) ;; for winnow
