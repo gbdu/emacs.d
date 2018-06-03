@@ -1,4 +1,6 @@
 #+STARTUP: indent
+#+STARTUP: overview
+
 * Helper functions
 ** Reload init.el 
 #+BEGIN_SRC emacs-lisp
@@ -404,7 +406,7 @@ Frames: _f_rame new  _df_ delete
 #+END_SRC
 ** persp helper hydra
 #+BEGIN_SRC emacs-lisp
-(desktop-save-mode 1)
+
 (defhydra helper-hydra-persp (:color blue :hint nil)
   ("`" persp-switch "perspective switch")
   ("i" persp-import "perspective import")
@@ -451,7 +453,7 @@ Frames: _f_rame new  _df_ delete
 
    (define-key rctrlmap (kbd "d") 'dired)
    (define-key rctrlmap (kbd "p") 'projectile-speedbar-open-current-buffer-in-tree)
-   (define-key rctrlmap [f7] 'moo-jump-local)
+   (define-key rctrlmap [f7] 'helm-semantic-or-imenu)
    (define-key rctrlmap (kbd "w") 'moo-jump-directory)
    (define-key rctrlmap (kbd "a") (lambda() (interactive) (popup-tip rctrlmap_values)))
    (define-key rctrlmap (kbd "C-a") (lambda() (interactive) (popup-tip rctrlmap_values)))
@@ -468,14 +470,16 @@ Frames: _f_rame new  _df_ delete
   ;; define a prefix keymap
   (define-prefix-command 'rshiftmap)
   (define-key rshiftmap [? ] 'er/expand-region)
+  
   (define-key rshiftmap [f9] 'hs-toggle-hiding)
-  (define-key rshiftmap (kbd "c") 'aya-create)
-  (define-key rshiftmap (kbd "e") 'aya-expand)
 
   (define-key rshiftmap (kbd "q") 'magit-diff-popup)
   (define-key rshiftmap (kbd "s") 'magit-status)
   (define-key rshiftmap (kbd "a") 'magit-dispatch-popup)
   (define-key rshiftmap (kbd "x") 'magit-commit)
+
+
+  (define-key rshiftmap (kbd "f") 'helm-find-files)
 
   (define-key rshiftmap (kbd "1") 'hs-toggle-hiding)
   (define-key rshiftmap [?\t] 'org-global-cycle)
@@ -495,7 +499,7 @@ Frames: _f_rame new  _df_ delete
   (define-key rshiftmap (kbd "2") 'rotate:even-vertical)
   (define-key rshiftmap (kbd "3") 'rotate:main-horizontal)
   (define-key rshiftmap (kbd "4") 'rotate:main-vertical)
-  (define-key rshiftmap (kbd "5") 'rotate:main-tiled)
+  (define-key rshiftmap (kbd "5") 'rotate:tiled)
 
 
 
@@ -505,7 +509,7 @@ Frames: _f_rame new  _df_ delete
   (define-key rshiftmap (kbd "\\") 'ripgrep-regexp)
   (define-key rshiftmap [?\d] 'kill-whitespace)
 
-  (define-key rshiftmap [f7] 'dumb-jump-go)
+  (define-key rshiftmap [f7] 'yas/insert-snippet)
 
   (define-key rshiftmap [f8] 'helm-semantic-or-imenu))
 
@@ -581,11 +585,9 @@ Frames: _f_rame new  _df_ delete
 (defhydra hydra-f1 (:color blue :timeout 12 :columns 3)
   "F1 Helpers"
   
-  ("<f1>" org-clock-in "Clock in")
+  ("<f1>" helm-semantic-or-imenu "Helm Semantic")
   ("<f5>" my/copy-id-to-clipboard "Copy headline ID")
   ("c" org-capture "Capture note")
-  
-  ("<f2>" org-clock-out "Clock out")
   ("I" my/org-add-ids-to-headlines-in-file "ID all headlines")  
   ("f" helper-hydra-fonts/body "Change fonts")
   
@@ -611,7 +613,6 @@ Frames: _f_rame new  _df_ delete
 
 (global-set-key (kbd "<f1>") 'hydra-f1/body)
 #+END_SRC
-
 * hide-show mode 
 
 (define-globalized-minor-mode global-hs-minor-mode
@@ -688,7 +689,6 @@ Frames: _f_rame new  _df_ delete
 * Completion
 ** Auths-ocomplete options
 #+BEGIN_SRC emacs-lisp
-
 (ac-config-default)
 
 (setq ac-auto-show-menu    0.1) 
@@ -832,7 +832,7 @@ Frames: _f_rame new  _df_ delete
 
 * Tabs always work
 #+BEGIN_SRC emacs-lisp
-(setq tab-always-indent nil)
+(setq tab-always-indent 't )
 #+END_SRC
 
 * Backup options
@@ -862,9 +862,11 @@ Frames: _f_rame new  _df_ delete
 
 #+END_SRC
 
-* Pers mode
-#+BEGIN_SRC emacs-lisp
+* Misc
+BEGIN_SRC emacs-lisp
 
-  
+(gylobal-undo-tree-mode)
 
-#+END_SRC 
+
+(desktop-save-mode 1)
+END_SRC 
