@@ -1,2 +1,11 @@
 * What is this?
 A live repository of my ~/.emacs.d with various settings organized into org heading
+* How does it work?
+~/.emacs.d/init.el is read by emacs the normal way then it runs org-babel-load-file to parse the ~/.emacs.d/settings.org file 
+* What does settings.org contain?
+** It's a normal org file with headings
+** Subtree that start with #+BEGIN_SRC and end with #+END_SRC are interpreted by org-babel-load-file
+* What's the advantage of doing things this way?
+** A better organized emacs configuration and compatibility with the rest of your org-sphere.
+** You can add notes and headlines into your settings file without it being parsed by emacs. 
+

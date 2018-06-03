@@ -11,7 +11,7 @@
 
 ;; Your settings and configurations
 (require 'org)
-(org-babel-load-file "/home/garg/.emacs.d/settings.org")
+(org-babel-load-file "~/.emacs.d/settings.org")
 
 ;; Custom used by emacs and elpa
 (custom-set-variables
