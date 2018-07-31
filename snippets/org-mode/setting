@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: setting
+# key: setting
+# --
+
+* ${1:NAME}
+#+BEGIN_SRC emacs-lisp
+${`yas-selected-text`}
+#+END_SRC

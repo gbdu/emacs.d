@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# name: etest
+# key: etest
+# --
+
+if (${1:condition} != NULL) ${2:{
+    
+    fprintf(stderr,"$0");
+
+    ${4:return} -1;
+}}

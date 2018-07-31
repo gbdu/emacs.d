@@ -28,6 +28,7 @@ defining them in this alist."
     ("zenburn-bg-fringe". "#101010")
     ("zenburn-bg-z"     . "#050000")
     ("zenburn-bg-1"     . "#202020")
+    ("zenburn-bg-2"     . "#303030")
     ("zenburn-bg-05"    . "#353535")
     ("zenburn-bg"       . "#0f0f0f")
     ("zenburn-bg-08"    . "#151515")
@@ -262,7 +263,7 @@ Also bind `class' to ((class color) (min-colors 89))."
    `(popup-menu-mouse-face ((t (:background ,zenburn-yellow-2 :foreground ,zenburn-bg-2))))
    `(popup-summary-face ((t (:background ,zenburn-bg+3 :foreground ,zenburn-bg-2))))
    `(popup-scroll-bar-foreground-face ((t (:background ,zenburn-blue-5))))
-   `(popup-scroll-bar-background-face ((t (:background ,zenburn-bg-1))))
+   `(popup-scroll-bar-background-face ((t (:background ,zenburn-bg-2))))
    `(popup-isearch-match ((t (:background ,zenburn-bg :foreground ,zenburn-fg))))
 ;;;;; avy
    `(avy-background-face

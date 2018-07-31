@@ -654,34 +654,126 @@ helm-echo-input-in-header-line t)
 ** ralt navigation hydra
 #+BEGIN_SRC emacs-lisp
 
+(defun avy-goto-conditional ()
+  (interactive)
+  (avy--generic-jump "\\s(\\(if\\|cond\\|when\\|unless\\)\\b" nil 'pre))
+(global-set-key (kbd "M-g c") 'avy-goto-conditional)
 
-;; (setq avy-keys (number-sequence ?1 ?z) )
+
+(defun avy-goto-paren ()
+  (interactive)
+  (avy--generic-jump "(" nil 'pre))
+(global-set-key (kbd "M-g p") 'avy-goto-paren)
+
+
+(defun avy-org-same-level (&optional all)
+  "Go to any org heading of the same level as the current one.
+
+By default, choices are limited to headings under common
+subheading, but if called with a prefix argument, will be
+buffer-global."
+  (interactive "P")
+  (let ((org-level (org-current-level)))
+    (avy--generic-jump
+     (format "^%s "
+             (regexp-quote
+              (make-string org-level ?*)))
+     nil
+     'pre
+     (unless (or all (= org-level 1))
+       (save-excursion
+         (outline-up-heading 1)
+         (point)))
+     (unless (or all (= org-level 1))
+       (save-excursion
+         (outline-up-heading 1)
+         (org-end-of-subtree))))))
+
+(defun avy-org-parent-level (&optional all)
+  "Go to any org heading one level above the current one.
+
+By default, choices are limited to headings under common
+subheading, but if called with a prefix argument, will be
+buffer-global."
+  (interactive "P")
+  (let ((org-level (org-current-level)))
+    (if (= org-level 1)
+        (message "Already at top level.")
+      (avy--generic-jump
+       (format "^%s "
+               (regexp-quote
+                (make-string (- org-level 1) ?*)))
+       nil
+       'pre
+       (unless (or all (= org-level 2))
+         (save-excursion
+           (outline-up-heading 2)
+           (point)))
+       (unless (or all (= org-level 2))
+         (save-excursion
+           (outline-up-heading 2)
+           (org-end-of-subtree)))))))
+
+(defun avy-org-child-level (&optional all)
+  "Go to any org heading one level below the current one.
+
+By default, choices are limited to headings under common
+subheading, but if called with a prefix argument, will be
+buffer-global."
+  (interactive "P")
+  (if (save-excursion (org-goto-first-child))
+      (let ((org-level (org-current-level)))
+        (avy--generic-jump
+         (format "^%s "
+                 (regexp-quote
+                  (make-string (+ org-level 1) ?*)))
+         nil
+         'pre
+         (unless all
+           (save-excursion
+             (ignore-errors
+               (outline-up-heading 0))
+             (point)))
+         (unless all
+           (save-excursion
+             (ignore-errors
+               (outline-up-heading 0))
+             (org-end-of-subtree)))))
+    (message "Heading has no children.")))
+
+(defun avy-org-goto-level (&optional num)
+  "Prompt for an org level to go to, defaulting to the current one."
+  (interactive (list
+                (read-number "Select heading level: " (org-current-level))))
+  (avy--generic-jump
+   (format "^%s " (regexp-quote (make-string num ?*)))
+   nil
+   'pre))
+#+END_SRC 
+#+BEGIN_SRC emacs-lisp
+(setq avy-keys (concat (number-sequence ?1 ?9) '(?a ?b ?c ?d ?z ?f ?r ?e) ) )
+
 
 (setq avy-all-windows nil)
+(setq avy-case-fold-search nil) 
 
-(defhydra hydra-navigation (:color pink :hint nil)
-"
-^GOTO^             ^REFILE^           ^Move
-^^^^^^-------------^----^----------------------------------
-_-_ line
-_+_ line  
-_*_ heading 
+(defhydra hydra-navigation (:color pink )
 
-"
-;; GOTO
 
-( "-" avy-goto-line :color blue)    
-( "<f6>" avy-goto-line :color blue)    
+( "<f6>" avy-goto-line :color blue)
+
+("a" avy-goto-open-paren)
+("b" avy-goto-close)
+
+("w" avy-goto-symbol-1-above)
+("s" avy-goto-symbol-1-below)
+
 ( "+" avy-goto-char :color blue)
 ("*" avy-org-goto-heading-timer :color blue)
 ("5" avy-isearch)
+("w" avy-goto-word-1)
 
-;; Show
-;; ("a" show-all)          ; Show (expand) everything
-;; Move
-;;                   ("u" outline-up-heading)                ; Up
-
-
+( "-" avy-goto-line :color blue)    
 )
 
 (global-set-key (kbd "<f6>") 'hydra-navigation/body)
@@ -782,12 +874,12 @@ _*_ heading
  
 (defhydra hydra-f1 (:color blue :timeout 12 :hint none)
 "
- ^HYDRAS                   ^Find                          ^Misc        
+ ^HYDRAS                   ^Find                          ^^Misc        
  _r_ rectangle hydra       ^ _<f1>_ find-function               
  _s_ yassnippet hydra      ^ _<f2>_ apropos                          
  _w_ window hydra          ^ _<f3>_ find file in dir                 
- _t_ transpose hydra       ^ _<f4>_ web search                       
- _o_ org hydra                                             ^  _R_ reload  
+ _t_ transpose hydra       ^ _<f4>_ web search             ^_E_diff          
+ _o_ org hydra             ^                               ^_R_eload  
 
 "      
 ("r" helper-hydra-rectangle/body "Rectangle hydra"  )
@@ -803,17 +895,14 @@ _*_ heading
 ("<f3>" helm-find )
 ("<f4>" helper-hydra-web-search )
 
-("R" helper-reload-settings "Reload settings.org")
+("E" helper-hydra-ediff/body )
+("R" helper-reload-settings  )
 
-       ;; ("d" org-clock-display "Display clocking")
-       ;; ("q" org-clock-cancel "Cancel a clock")
-       ;; ("E" helper-hydra-ediff/body  "Ediff hydra" )
-   ;;    ("<f1>" helper-hydra-navigation "Navy"  )
+)
 
-       )
+(global-set-key (kbd "<f1>") 'hydra-f1/body)
 
-       (global-set-key (kbd "<f1>") 'hydra-f1/body)
-   #+END_SRC
+#+END_SRC
 
 
 ** disabled rctrl  
@@ -896,8 +985,8 @@ _*_ heading
 ** Subtract Hydra
 *** old folding
 #+BEGIN_SRC emacs-lisp
-  ;; (setq folding-mode-prefix-key [kp-subtract])
-  ;; (eval-after-load 'folding '(folding-kbd (kbd "a") 'folding-shift-out ))
+;; (setq folding-mode-prefix-key [kp-subtract])
+;; (eval-after-load 'folding '(folding-kbd (kbd "a") 'folding-shift-out ))
 #+END_SRC
 *** Origami hydra 
 #+BEGIN_SRC emacs-lisp

@@ -48,20 +48,15 @@
 #+END_SRC
 **** Add ids to items
 #+BEGIN_SRC emacs-lisp
-(defun my/org-agenda-cts ()
-  (let ((args (get-text-property
-               (min (1- (point-max)) (point))
-               'org-last-args)))
-    (nth 2 args)))
 
 (defun my/org-add-ids-to-headlines-in-file ()
   "Add ID properties to all headlines in the current file which do not already have one."
   (interactive)
   (org-map-entries 'org-id-get-create))
 
- (add-hook 'org-mode-hook
-  (lambda () ((define-key org-agenda-mode-map
-    "v" 'hydra-org-agenda-view/body))))
+;; (add-hook 'org-mode-hook
+;;  (lambda ()
+;;	    (add-hook 'before-save-hook 'my/org-add-ids-to-headlines-in-file nil 'local)))
 
 (defun my/copy-id-to-clipboard() "Copy the ID property value to killring,
 if no ID is there then create a new unique ID.
@@ -105,8 +100,6 @@ text and copying to the killring."
 	  (save-excursion
 	    (if (not (bolp)) (forward-line 1))
 	    (delete-whitespace-rectangle (point) end nil)))
-
-(find-function-at-point)
 #+END_SRC 
 ** Kill whitespace
 #+BEGIN_SRC emacs-lisp
@@ -160,11 +153,12 @@ text and copying to the killring."
 ** my-change-window-divider
 #+BEGIN_SRC emacs-lisp
 ;; (setq windmove-wrap-around t)
+(defun my-change-window-divider ()
+(let ((display-table (or buffer-display-table standard-display-table)))
+(set-display-table-slot display-table 5 ?│)
+(set-window-display-table (selected-window) display-table)))
 (set-face-foreground 'vertical-border "black")
-
-
-;; (add-hook 'window-configuration-change-hook 'my-change-window-divider)
-
+(add-hook 'window-configuration-change-hook 'my-change-window-divider)
 
 
 #+END_SRC
@@ -177,23 +171,10 @@ text and copying to the killring."
 
 
 #+END_SRC
-** help+
-#+BEGIN_SRC emacs-lisp
-(require 'help+)
-
-#+END_SRC
-** F1 Hydra (easy access)
-#+BEGIN_SRC emacs-lisp
-  (defun org-agenda-cts ()
-    (let ((args (get-text-property
-                 (min (1- (point-max)) (point))
-                 'org-last-args)))
-      (nth 2 args)))
-#+END_SRC 
 * Helper hydras
-** Outline
- #+BEGIN_SRC emacs-lisp
- (defhydra hydra-outline (:color pink :hint nil)
+** outline
+  #+BEGIN_SRC emacs-lisp
+(defhydra hydra-outline (:color pink :hint nil)
   "
 ^Hide^             ^Show^           ^Move
 ^^^^^^------------------------------------------------------
@@ -225,7 +206,9 @@ _d_: subtree
   ("f" outline-forward-same-level)        ; Forward - same level
   ("b" outline-backward-same-level)       ; Backward - same level
   ("z" nil "leave"))
- #+END_SRC
+
+
+  #+END_SRC
 ** Fonts hydra
 #+BEGIN_SRC emacs-lisp
 (defhydra helper-hydra-fonts (:body-pre (message "fonts"))
@@ -329,7 +312,6 @@ _vr_ reset      ^^                       ^^                 ^^
      ("t" org-table-transpose-table-at-point "Org mode table")
      ("q" nil "cancel" :color blue))
 
-
 #+END_SRC
 
 ** Ediff hydra
@@ -411,34 +393,33 @@ T - tag prefix
 
 ** Rectangle hydra
 #+BEGIN_SRC emacs-lisp
-(require 'rect)
 (defhydra helper-hydra-rectangle (:body-pre (rectangle-mark-mode 1)
-                           :color pink
-                           :post (deactivate-mark))
-  "
-  ^_k_^     _d_elete    _s_tring
-_h_   _l_   _o_k        _y_ank
-  ^_j_^     _n_ew-copy  _r_eset
-^^^^        _e_xchange  _u_ndo
-^^^^        ^ ^         _p_aste
+                                     :color pink
+                                     :hint nil
+                                     :post (deactivate-mark))
+" hydra-rectangle
+  ^_k_^       _w_ copy      _o_pen       _N_umber-lines        
+_h_   _l_     _y_ank        _t_ype       _e_xchange-point      
+  ^_j_^       _d_ kill      _c_lear      _r_eset-region-mark   
+^^^^          _u_ndo        _g_ quit     ^ ^                   
 "
-  ("h" rectangle-backward-char nil)
-  ("l" rectangle-forward-char nil)
-  ("k" rectangle-previous-line nil)
-  ("j" rectangle-next-line nil)
-  ("e" hydra-ex-point-mark nil)
-  ("n" copy-rectangle-as-kill nil)
-  ("d" delete-rectangle nil)
+  ("k" rectangle-previous-line)
+  ("j" rectangle-next-line)
+  ("h" rectangle-backward-char)
+  ("l" rectangle-forward-char)
+  ("d" kill-rectangle)                    ;; C-x r k
+  ("y" yank-rectangle)                    ;; C-x r y
+  ("w" copy-rectangle-as-kill)            ;; C-x r M-w
+  ("o" open-rectangle)                    ;; C-x r o
+  ("t" string-rectangle)                  ;; C-x r t
+  ("c" clear-rectangle)                   ;; C-x r c
+  ("e" rectangle-exchange-point-and-mark) ;; C-x C-x
+  ("N" rectangle-number-lines)            ;; C-x r N
   ("r" (if (region-active-p)
            (deactivate-mark)
-         (rectangle-mark-mode 1)) nil)
-  ("y" yank-rectangle nil)
+         (rectangle-mark-mode 1)))
   ("u" undo nil)
-  ("s" string-rectangle nil)
-  ("p" kill-rectangle nil)
-("o" nil nil))
-
-
+  ("g" nil))      ;; ok
 #+END_SRC
 
 ** Window hydra
@@ -513,6 +494,11 @@ Frames: _f_rame new  _df_ delete
 ** persp helper hydra
 #+BEGIN_SRC emacs-lisp
 
+(defhydra helper-hydra-persp (:color blue :hint nil)
+  ("`" persp-switch "perspective switch")
+  ("i" persp-import "perspective import")
+  ("n" persp-next "perspective next")
+("1" persp-switch-last "last"))
 
 #+END_SRC
 ** Require
@@ -526,7 +512,6 @@ Frames: _f_rame new  _df_ delete
  (add-hook 'compilation-mode-hook 'winnow-mode) ;; for winnow
 
  #+END_SRC
-
 * helm
 #+BEGIN_SRC emacs-lisp
 (require 'helm)
@@ -570,7 +555,7 @@ helm-echo-input-in-header-line t)
 #+END_SRC
 
 * GLOBAL MAPS
-** KP
+** KP 
 *** Help text
 |-----------------+--------------+-----------------+---|
 | Numlock         | / layouts    | * destroy-win   |   |
@@ -596,9 +581,6 @@ helm-echo-input-in-header-line t)
 
 *** SRC
 #+BEGIN_SRC emacs-lisp
-
-(global-set-key [NumLock] 'next-buffer)
-
   ;;; / deals with layouts
       (global-set-key [kp-divide] 'window-configuration-to-register)
       (global-set-key [C-kp-divide] 'jump-to-register)
@@ -648,199 +630,47 @@ helm-echo-input-in-header-line t)
     ;;  (global-set-key [kp-divide] 'goto-last-change)
     ;;  (global-set-key [kp-decimal] 'helm-occur)
 
-    
-#+END_SRC
-
-** ralt navigation hydra
-#+BEGIN_SRC emacs-lisp
-
-
-;; (setq avy-keys (number-sequence ?1 ?z) )
-
-(setq avy-all-windows nil)
-
-(defhydra hydra-navigation (:color pink :hint nil)
-"
-^GOTO^             ^REFILE^           ^Move
-^^^^^^-------------^----^----------------------------------
-_-_ line
-_+_ line  
-_*_ heading 
-
-"
-;; GOTO
-
-( "-" avy-goto-line :color blue)    
-( "<f6>" avy-goto-line :color blue)    
-( "+" avy-goto-char :color blue)
-("*" avy-org-goto-heading-timer :color blue)
-("5" avy-isearch)
-
-;; Show
-;; ("a" show-all)          ; Show (expand) everything
-;; Move
-;;                   ("u" outline-up-heading)                ; Up
-
-
-)
-
-(global-set-key (kbd "<f6>") 'hydra-navigation/body)
-
-#+END_SRC
-
-(require 'hydra-ox)
-
-
-** ralt map
-#+BEGIN_SRC emacs-lisp
-(global-set-key [f8] 'raltmap)
-
-(progn
-    (define-prefix-command 'raltmap)
-
-     (define-key raltmap [f8 right] (lambda() (interactive) (enlarge-window-horizontally 15)))
-     (define-key raltmap [f8 left] (lambda() (interactive) (shrink-window-horizontally 15)))
-     (define-key raltmap [f8 up] (lambda() (interactive) (enlarge-window 5)))
-     (define-key raltmap [f8 down] (lambda() (interactive) (shrink-window 5)))
-
-  )
-
-#+END_SRC
-** agenda view hydra 
-#+BEGIN_SRC emacs-lisp
-
-   (defhydra hydra-org-agenda-view (:hint none)
-   "
-   _d_: ?d? day        _g_: time grid=?g? _a_: arch-trees
-   _w_: ?w? week       _[_: inactive      _A_: arch-files
-   _t_: ?t? fortnight  _f_: follow=?f?    _r_: report=?r?
-   _m_: ?m? month      _e_: entry =?e?    _D_: diary=?D?
-   _y_: ?y? year       _q_: quit          _L__l__c_: ?l?"
-   ("SPC" org-agenda-reset-view)
-   ("d" org-agenda-day-view
-   (if (eq 'day (org-agenda-cts))
-   "[x]" "[ ]"))
-   ("w" org-agenda-week-view
-   (if (eq 'week (org-agenda-cts))
-   "[x]" "[ ]"))
-   ("t" org-agenda-fortnight-view
-   (if (eq 'fortnight (org-agenda-cts))
-   "[x]" "[ ]"))
-   ("m" org-agenda-month-view
-   (if (eq 'month (org-agenda-cts)) "[x]" "[ ]"))
-   ("y" org-agenda-year-view
-   (if (eq 'year (org-agenda-cts)) "[x]" "[ ]"))
-   ("l" org-agenda-log-mode
-   (format "% -3S" org-agenda-show-log))
-   ("L" (org-agenda-log-mode '(4)))
-   ("c" (org-agenda-log-mode 'clockcheck))
-   ("f" org-agenda-follow-mode
-   (format "% -3S" org-agenda-follow-mode))
-   ("a" org-agenda-archives-mode)
-   ("A" (org-agenda-archives-mode 'files))
-   ("r" org-agenda-clockreport-mode
-   (format "% -3S" org-agenda-clockreport-mode))
-   ("e" org-agenda-entry-text-mode
-   (format "% -3S" org-agenda-entry-text-mode))
-   ("g" org-agenda-toggle-time-grid
-   (format "% -3S" org-agenda-use-time-grid))
-   ("D" org-agenda-toggle-diary
-   (format "% -3S" org-agenda-include-diary))
-   ("!" org-agenda-toggle-deadlines)
-   ("["
-   (let ((org-agenda-include-inactive-timestamps t))
-   (org-agenda-check-type t 'timeline 'agenda)
-   (org-agenda-redo)))
-   ("q" (message "Abort") :exit t))
-
-
-   #+END_SRC
-** F1 hydra 
- #+BEGIN_SRC emacs-lisp
-
-    (defhydra helper-hydra-org-utils (:color blue)
-
-        ("<f5>" my/copy-id-to-clipboard "Copy headline ID")
-        ("c" org-capture "Capture note")
-        ("I" my/org-add-ids-to-headlines-in-file "ID all headlines")
-        ("aaa" org-agenda "Agenda show")
-
-      ;; ("<f3>" org-clock-in-last "Clock in last")
-       ("TAB" outline-next-visible-heading "next heading")
-       ("T" org-agenda-show-tags-in-columns  "Agenda tags")
-       ("j" org-adjust-region "Adjust list in region")
-    )
-
-    (defhydra helper-hydra-web-search (:color blue)
-
-       ("s" org-adjust-region "searx")
-    )
-  
-#+END_SRC 
-** f1 hydra 
- #+BEGIN_SRC emacs-lisp
  
-(defhydra hydra-f1 (:color blue :timeout 12 :hint none)
-"
- ^HYDRAS                   ^Find                          ^Misc        
- _r_ rectangle hydra       ^ _<f1>_ find-function               
- _s_ yassnippet hydra      ^ _<f2>_ apropos                          
- _w_ window hydra          ^ _<f3>_ find file in dir                 
- _t_ transpose hydra       ^ _<f4>_ web search                       
- _o_ org hydra                                             ^  _R_ reload  
-
-"      
-("r" helper-hydra-rectangle/body "Rectangle hydra"  )
-("s" helper-hydra-yasnippet/body "yasnippet hydra"  )
-("w" helper-hydra-window/body "Window hydra" )
-("f" helper-hydra-fonts/body "Change fonts" )
-("o" helper-hydra-org-utils/body "org utils")
-("t" helper-hydra-transpose/body )
-("1" helper-hydra-org-agenda/body "Agenda hydra"  )
-
-("<f1>" find-function "find-function")
-("<f2>" info-apropos "info-apropos")
-("<f3>" helm-find )
-("<f4>" helper-hydra-web-search )
-
-("R" helper-reload-settings "Reload settings.org")
-
-       ;; ("d" org-clock-display "Display clocking")
-       ;; ("q" org-clock-cancel "Cancel a clock")
-       ;; ("E" helper-hydra-ediff/body  "Ediff hydra" )
-   ;;    ("<f1>" helper-hydra-navigation "Navy"  )
-
-       )
-
-       (global-set-key (kbd "<f1>") 'hydra-f1/body)
-   #+END_SRC
-
-
-** disabled rctrl  
-#+BEGIN_SRC emacs-lisp
-  ;; (define-key rctrlmap [left] 'helm-gtags-previous-history)
-  ;; (define-key rctrlmap [right] 'helm-gtags-next-history)
-  ;; (define-key rctrlmap [up] 'helm-gtags-dwim)
-  ;; (define-key rctrlmap [down] 'helm-gtags-pop-stack)
-  ;; (define-key rctrlmap [?\r] 'helm-gtags-select)
-  ;; (define-key rctrlmap [f9] 'helm-gtags-tags-in-this-function)
-
-
-  ;; (define-key rctrlmap (kbd "r") 'helm-gtags-find-rtag)
-  ;; (define-key rctrlmap (kbd "C-r") 'helm-gtags-find-rtag)
-
-
-
-  ;; (define-key rctrlmap (kbd "C-f") 'helm-gtags-find-files)
-  ;; (define-key rctrlmap [f8 f8] 'helm-gtags-show-stack)
-  ;; (define-key rctrlmap (kbd "f") 'fzf-directory)
-  ;; (define-key rctrlmap (kbd "d") 'dired)
-
-  ;; (define-key rctrlmap (kbd "p") 'projectile-speedbar-open-current-buffer-in-tree)
-
-  ;; (define-key rctrlmap [f7] 'helm-semantic-or-
-
 #+END_SRC
+** rctrl map
+:PROPERTIES:
+:ID:       ba6d5a1c-53f1-47c7-abfe-714c2112381f
+:END:                   
+
+#+BEGIN_SRC emacs-lisp
+
+(global-set-key [f8] 'rctrlmap)
+ (progn
+   ;; define a prefix keymap
+   (define-prefix-command 'rctrlmap)
+   (define-key rctrlmap [f8 right] (lambda() (interactive) (enlarge-window-horizontally 5)))1
+   (define-key rctrlmap [f8 left] (lambda() (interactive) (shrink-window-horizontally 5)))
+   (define-key rctrlmap [f8 up] (lambda() (interactive) (enlarge-window 5)))
+   (define-key rctrlmap [f8 down] (lambda() (interactive) (shrink-window 5)))
+
+   (define-key rctrlmap [left] 'helm-gtags-previous-history)
+   (define-key rctrlmap [right] 'helm-gtags-next-history)
+   (define-key rctrlmap [up] 'helm-gtags-dwim)
+   (define-key rctrlmap [down] 'helm-gtags-pop-stack)
+   (define-key rctrlmap [?\r] 'helm-gtags-select)
+   (define-key rctrlmap [f9] 'helm-gtags-tags-in-this-function)
+   (define-key rctrlmap (kbd "r") 'helm-gtags-find-rtag)
+   (define-key rctrlmap (kbd "C-r") 'helm-gtags-find-rtag)
+   (define-key rctrlmap (kbd "f") 'fzf-directory)
+   (define-key rctrlmap (kbd "C-f") 'helm-gtags-find-files)
+   (define-key rctrlmap [f8 f8] 'helm-gtags-show-stack)
+
+   (define-key rctrlmap (kbd "d") 'dired)
+   (define-key rctrlmap (kbd "p") 'projectile-speedbar-open-current-buffer-in-tree)
+   (define-key rctrlmap [f7] 'helm-semantic-or-imenu)
+   (define-key rctrlmap (kbd "w") 'moo-jump-directory)
+   (define-key rctrlmap (kbd "a") (lambda() (interactive) (popup-tip rctrlmap_values)))
+   (define-key rctrlmap (kbd "C-a") (lambda() (interactive) (popup-tip rctrlmap_values)))
+)
+(setq rctrlmap_values (cdr rctrlmap))
+(setq rctrlmap_values (mapconcat (function (lambda (x) (format "%s\n\n" x) ) ) rctrlmap_values ""))
+#+END_SRC
+        
 ** rshift map
 #+BEGIN_SRC emacs-lisp
 
@@ -850,7 +680,7 @@ _*_ heading
   (define-prefix-command 'rshiftmap)
   (define-key rshiftmap [? ] 'er/expand-region)
   
-  (define-key rshiftmap [f9] 'toggle-hiding)
+  (define-key rshiftmap [f9] 'folding-toggle-show-hide)
 
   (define-key rshiftmap (kbd "q") 'magit-diff-popup)
   (define-key rshiftmap (kbd "s") 'magit-status)
@@ -879,6 +709,9 @@ _*_ heading
   (define-key rshiftmap (kbd "4") 'rotate:main-vertical)
   (define-key rshiftmap (kbd "5") 'rotate:tiled)
 
+
+
+
   (define-key rshiftmap [?\r] 'helm-do-grep-ag)
 
 ;;  (define-key rshiftmap (kbd "\\") 'ripgrep-regexp)
@@ -905,6 +738,40 @@ _*_ heading
 ;; ( global-set-key [kp-subtract] 'helper-hydra-origami/body )
 ;( global-set-key [kp-subtract] [kp-subtract] 'origami-recursively-toggle-node)
 
+#+END_SRC
+** F1 Hydra (easy access)
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-f1 (:color blue :timeout 12 :columns 3)
+  "F1 Helpers"
+
+  ("<f1>" helm-semantic-or-imenu "Helm Semantic")
+  ("?" info-apropos "info-apropos")
+  ("<f5>" my/copy-id-to-clipboard "Copy headline ID")
+  ("c" org-capture "Capture note")
+  ("I" my/org-add-ids-to-headlines-in-file "ID all headlines")  
+  ("f" helper-hydra-fonts/body "Change fonts")
+  ("F" folding-mode "Folding mode")
+  ("<f3>" org-clock-in-last "Clock in last")
+  ("1" helper-hydra-org-agenda/body "Agenda options")
+  ("a" org-agenda "Agenda show")
+  ("TAB" outline-next-visible-heading "next heading")
+  ("4" outline-hide-entry "hide")
+  ("t" org-agenda-show-tags-in-columns  "Agenda tags")
+  ("E" helper-hydra-ediff/body  "Ediff")
+  ("r" helper-hydra-rectangle/body "Rectangle hydra")
+  
+  ("`" helper-hydra-persp/body "perspective     ")
+  ("s" helper-hydra-yasnippet/body "yasnippet hydra")
+  
+("w" helper-hydra-window/body "Window hydra")
+
+("j" org-adjust-region "Adjust list in region")
+("R" helper-reload-settings "Reload settings.org")
+("d" org-clock-display "Display clocking")
+("q" org-clock-cancel "Cancel a clock")
+)
+
+(global-set-key (kbd "<f1>") 'hydra-f1/body)
 #+END_SRC
 ** Misc maps
 * GLOBAL modes 
@@ -946,6 +813,7 @@ _*_ heading
 (save-place-mode 1)
 
 #+END_SRC
+
 
 * Completion
 *** DISABLED ac-complete options
@@ -1016,7 +884,6 @@ _*_ heading
   (require 'company)
   (add-hook 'after-init-hook 'global-company-mode)
   (setq company-backends (delete 'company-semantic company-backends))
-
   ;; (define-key c-mode-map  [(tab)] 'company-complete)
   ;; (define-key c++-mode-map  [(tab)] 'company-complete)
 
@@ -1119,11 +986,11 @@ _*_ heading
 (require 'powerline)
 (setq powerline-arrow-shape 'arrow14) ;; best for small fonts
 #+END_SRC
-** Highlight/narrow  search
+** Highlight search
 #+BEGIN_SRC emacs-lisp
 (setq ag-highlight-search t)
 (setq case-fold-search t) ;; case insensitive search
-`
+
 (add-hook 'ag-mode-hook 'winnow-mode)
 (add-hook 'compilation-mode-hook 'winnow-mode) ;; for winnow
 #+END_SRC
@@ -1212,6 +1079,7 @@ _*_ heading
 #+END_SRC 
 ** ff-search (switch to header files)
 #+BEGIN_SRC emacs-lisp
+
 (setq ff-search-directories '("."
                               "../inc" "../inc/*" "../include/*" "../src"
                               "../include" "../src/*" "../../src/*" "../../../src/*"
@@ -1244,55 +1112,22 @@ _*_ heading
 (add-to-list 'company-backends 'company-irony)
 
 (eval-after-load 'company '(add-to-list 'company-backends 'company-irony))
-(eval-after-load 'flycheck  '(add-hook 'flycheck-mode-hook 'flycheck-irony-setup))  (setq set-mark-command-repeat-pop t)
-
 #+END_SRC
-
-
+** irony-flycheck 
+(eval-after-load 'flycheck  '(add-hook 'flycheck-mode-hook 'flycheck-irony-setup))  (setq set-mark-command-repeat-pop t)
 
 * Folding / hideshow  
 ** hide-show mode 
 #+BEGIN_SRC emacs-lisp
       ;;(define-globalized-minor-mode global-hs-minor-mode hs-minor-mode hs-minor-mode)
 
-
-
-
-    (setq hs-isearch-open 't)
-    (defun display-code-line-counts (ov)
-      (when (eq 'code (overlay-get ov 'hs))
-        (overlay-put ov 'help-echo
-                     (buffer-substring (overlay-start ov)
- 		                      (overlay-end ov)))))
- 
-    (setq hs-set-up-overlay 'display-code-line-counts)
-
-
-
-
-
-
-
-    (defun toggle-selective-display (column)
-      (interactive "P")
-      (set-selective-display
-       (or column
-           (unless selective-display
-             (1+ (current-column))))))
-   
-             (defun toggle-hiding (column)
-      (interactive "P")
-      (if hs-minor-mode
-          (if (condition-case nil
-                  (hs-toggle-hiding)
-                (error t))
-              (hs-show-all))
-        (toggle-selective-display column)))
-
-  (require 'hideshow-org)
+  ;; (require 'hideshow-org)
   (add-hook 'c++-mode-hook 'hs-minor-mode)
 
-
+  (defun toggle-selective-display (column)
+      (interactive "P")
+      (set-selective-display (or column (unless selective-display (1+ (current-column))))))
+    
       (require 'hideshowvis)
       (autoload 'hideshowvis-enable "hideshowvis" "Highlight foldable regions")
         (autoload 'hideshowvis-minor-mode "hideshowvis"
@@ -1321,99 +1156,97 @@ _*_ heading
 #+END_SRC
 ** Folding-mode
 #+BEGIN_SRC emacs-lisp
-  ;; (load "folding" 'nomessage 'noerror)
-  ;; (folding-mode-add-find-file-hook)
+    (load "folding" 'nomessage 'noerror)
+    (folding-mode-add-find-file-hook)
+    (setq folding-load-hook 'my-folding-load-hook)
+      ;; And while I’m at it, any way of not narrowing every time I enter a fold?
+        (setq folding-narrow-by-default nil)
+        
+        (add-hook 'c-mode-common-hook   'folding-mode)
+        (add-hook 'emacs-lisp-mode-hook 'folding-mode)
+        (add-hook 'lisp-mode-hook       'folding-mode)
+        (add-hook 'java-mode-hook       'folding-mode)
+          (add-hook 'perl-mode-hook       'folding-mode)
+          (add-hook 'sh-mode-hook         'folding-mode)   
 
-  ;; (setq folding-mode-prefix-key [kp-divide])
-
-  ;; ;;    (setq folding-load-hook 'my-folding-load-hook)
-  ;; ;; And while I’m at it, any way of not narrowing every time I enter a fold?
-
-  ;; (setq folding-narrow-by-default nil)
-
-  ;; (add-hook 'c-mode-common-hook   'folding-mode)
-  ;; (add-hook 'emacs-lisp-mode-hook 'folding-mode)
-  ;; (add-hook 'lisp-mode-hook       'folding-mode)
-  ;; (add-hook 'java-mode-hook       'folding-mode)
-  ;; (add-hook 'perl-mode-hook       'folding-mode)
-  ;; (add-hook 'sh-mode-hook         'folding-mode)   
-
-  ;; (folding-kbd (kbd "d") 'folding-shift-in )
-  ;; (folding-kbd (kbd "a") 'folding-shift-out )
-  ;; (folding-kbd (kbd "w") 'folding-previous-visible-heading)
-  ;; (folding-kbd (kbd "s") 'folding-next-visible-heading)
-  ;; (folding-kbd (kbd "<kp-subtract>") 'folding-show-current-subtree)
-  ;; (folding-kbd (kbd "+") 'folding-hide-current-subtree)
-
-   ;; (folding-add-to-marks-list 'lua-mode "-- {{{" "-- }}}" nil t)
-   ;; (folding-add-to-marks-list 'c++-mode "// {{{" "// }}}" nil t) ;
-
-
-   ;;  (folding-add-to-marks-list 'ada-mode               "-- {{{" "-- }}}" nil t)
-   ;;  (folding-add-to-marks-list 'asm-mode               "; {{{"  "; }}}" nil t)
-   ;;  (folding-add-to-marks-list 'awk-mode               "# {{{"  "# }}}" nil t)
-   ;;  (folding-add-to-marks-list 'Bison-mode             "/* {{{" "/* }}} */" " */" t)
-   ;;  (folding-add-to-marks-list 'LaTeX-mode             "%{{{"   "%}}}" nil t)
-   ;;  (folding-add-to-marks-list 'TeX-mode               "%{{{"   "%}}}" nil t)
-   ;;  (folding-add-to-marks-list 'bibtex-mode            "%{{{"   "%}}} */" nil t)
-   ;;  (folding-add-to-marks-list 'bison-mode             "/* {{{" "/* }}} */" " */" t)
-   ;;  (folding-add-to-marks-list 'c-mode                 "/* {{{" "/* }}} */" " */" t)
-   ;;  (folding-add-to-marks-list 'dcl-mode               "! {{{"  "! }}}" nil t)
-   ;;  (folding-add-to-marks-list 'change-log-mode        "{{{"    "}}}" nil t)
-   ;;  (folding-add-to-marks-list 'cperl-mode             "# {{{"  "# }}}" nil t)
-   ;;  (folding-add-to-marks-list 'emacs-lisp-mode        ";;{{{"  ";;}}}" nil t)
-   ;;  (folding-add-to-marks-list 'erlang-mode            "%%{{{"  "%%}}}" nil t)
-   ;;  (folding-add-to-marks-list 'finder-mode            "{{{"    "}}}" nil t)
-   ;;  (folding-add-to-marks-list 'fortran-mode           "! {{{"  "! }}}" nil t)
-   ;;  (folding-add-to-marks-list 'f90-mode               "! {{{"  "! }}}" nil t)
-   ;;  (folding-add-to-marks-list 'generic-mode           ";# "    ";\$" nil t)
-   ;;  (folding-add-to-marks-list 'gofer-mode             "-- {{{" "-- }}}" nil t)
-   ;;  (folding-add-to-marks-list 'html-mode   "<!-- {{{ " "<!-- }}} -->" " -->" t)
-   ;;  (folding-add-to-marks-list 'icon-mode              "# {{{" "# }}}" nil t)
-   ;;  (folding-add-to-marks-list 'indented-text-mode     "{{{"    "}}}" nil t)
-   ;;  (folding-add-to-marks-list 'java-mode              "// {{{" "// }}}" nil t)
-   ;;  (folding-add-to-marks-list 'javascript-mode        "// {{{" "// }}}" nil t)
-   ;;  (folding-add-to-marks-list 'jde-mode               "// {{{" "// }}}" nil t)
-   ;;  (folding-add-to-marks-list 'ksh-mode               "# {{{"  "# }}}" nil t)
-   ;;  (folding-add-to-marks-list 'latex-mode             "%{{{"   "%}}}" nil t)
-   ;;  (folding-add-to-marks-list 'lisp-interaction-mode  ";;{{{"  ";;}}}" nil t)
-   ;;  (folding-add-to-marks-list 'lisp-mode              ";;{{{"  ";;}}}" nil t)
-   ;;  (folding-add-to-marks-list 'm4-mode                "# {{{" "# }}}" nil t)
-   ;;  (folding-add-to-marks-list 'makefile-mode          "# {{{"  "# }}}" nil t)
-   ;;  (folding-add-to-marks-list 'matlab-mode            "%%%{{{" "%%%}}}" nil t)
-   ;;  (folding-add-to-marks-list 'meta-mode              "% {{{" "% }}}" nil t)
-   ;;  (folding-add-to-marks-list 'ml-mode                "(* {{{" "(* }}} *)" " *)" t)
-   ;;  (folding-add-to-marks-list 'modula-2-mode          "(* {{{" "(* }}} *)" " *)" t)
-   ;;  (folding-add-to-marks-list 'nroff-mode             "\\\\ {{{" "\\\\ }}}" nil t)
-   ;;  (folding-add-to-marks-list 'occam-mode             "-- {{{" "-- }}}" nil t)
-   ;;  (folding-add-to-marks-list 'orwell-mode            "{{{"    "}}}" nil t)
-   ;;  (folding-add-to-marks-list 'pascal-mode            "{ ((( " "{ ))) }" " }" t)
-   ;;  (folding-add-to-marks-list 'php-mode               "// {{{" "// }}}" nil t)
-   ;;  (folding-add-to-marks-list 'perl-mode              "# {{{"  "# }}}" nil t)
-   ;;  (folding-add-to-marks-list 'plain-TeX-mode         "%{{{"   "%}}}" nil t)
-   ;;  (folding-add-to-marks-list 'plain-tex-mode         "%{{{"   "%}}}" nil t)
-   ;;  (folding-add-to-marks-list 'prolog-mode            "% {{{"   "% }}}" nil t)
-   ;;  (folding-add-to-marks-list 'python-mode            "# {{{"  "# }}}" nil t)
-   ;;  (folding-add-to-marks-list 'rexx-mode              "/* {{{" "/* }}} */" " */" t)
-   ;;  (folding-add-to-marks-list 'sh-mode                "# {{{"  "# }}}" nil t)
-   ;;  (folding-add-to-marks-list 'sh-script-mode         "# {{{"  "# }}}" nil t)
-   ;;  (folding-add-to-marks-list 'shellscript-mode       "# {{{"  "# }}}" nil t)
-   ;;  (folding-add-to-marks-list 'sgml-mode   "<!-- [[[ " "<!-- ]]] -->" " -->" t)
-   ;;  (folding-add-to-marks-list 'simula-mode            "! {{{"  "! }}}" nil t)
-   ;;  (folding-add-to-marks-list 'sml-mode               "(* {{{" "(* }}} *)" " *)" t)
-   ;;  (folding-add-to-marks-list 'sql-mode               "-- {{{"  "-- }}}" nil t)
-   ;;  (folding-add-to-marks-list 'tcl-mode               "#{{{"   "#}}}" nil t)
-   ;;  (folding-add-to-marks-list 'tex-mode               "%{{{"   "%}}}" nil t)
-   ;;  (folding-add-to-marks-list 'texinfo-mode   "@c {{{" "@c {{{endfold}}}" " }}}" t)
-   ;;  (folding-add-to-marks-list 'text-mode              "{{{"    "}}}" nil t)
-   ;;  (folding-add-to-marks-list 'vhdl-mode              "# {{{"  "# }}}" nil t)
-   ;;  (folding-add-to-marks-list 'xerl-mode              "%%{{{"  "%%}}}" nil t)
-   ;;  (folding-add-to-marks-list 'xrdb-mode              "! {{{"  "! }}}" nil t)
+    (setq folding-mode-prefix-key [kp-subtract])
+    
+    (folding-kbd (kbd "d") 'folding-shift-in )
+    (folding-kbd (kbd "a") 'folding-shift-out )
+    (folding-kbd (kbd "w") 'folding-previous-visible-heading)
+    (folding-kbd (kbd "s") 'folding-next-visible-heading)
+    (folding-kbd (kbd "<kp-subtract>") 'folding-show-current-subtree)
+    (folding-kbd (kbd "+") 'folding-hide-current-subtree)
 
 
 #+END_SRC
 *** extra marks
  #+BEGIN_SRC emacs-lisp
+   (folding-add-to-marks-list 'lua-mode "-- {{{" "-- }}}" nil t)
+   (folding-add-to-marks-list 'c++-mode "// {{{" "// }}}" nil t) ;
+
+
+    (folding-add-to-marks-list 'ada-mode               "-- {{{" "-- }}}" nil t)
+    (folding-add-to-marks-list 'asm-mode               "; {{{"  "; }}}" nil t)
+    (folding-add-to-marks-list 'awk-mode               "# {{{"  "# }}}" nil t)
+    (folding-add-to-marks-list 'Bison-mode             "/* {{{" "/* }}} */" " */" t)
+    (folding-add-to-marks-list 'LaTeX-mode             "%{{{"   "%}}}" nil t)
+    (folding-add-to-marks-list 'TeX-mode               "%{{{"   "%}}}" nil t)
+    (folding-add-to-marks-list 'bibtex-mode            "%{{{"   "%}}} */" nil t)
+    (folding-add-to-marks-list 'bison-mode             "/* {{{" "/* }}} */" " */" t)
+    (folding-add-to-marks-list 'c-mode                 "/* {{{" "/* }}} */" " */" t)
+    (folding-add-to-marks-list 'dcl-mode               "! {{{"  "! }}}" nil t)
+    (folding-add-to-marks-list 'change-log-mode        "{{{"    "}}}" nil t)
+    (folding-add-to-marks-list 'cperl-mode             "# {{{"  "# }}}" nil t)
+    (folding-add-to-marks-list 'emacs-lisp-mode        ";;{{{"  ";;}}}" nil t)
+    (folding-add-to-marks-list 'erlang-mode            "%%{{{"  "%%}}}" nil t)
+    (folding-add-to-marks-list 'finder-mode            "{{{"    "}}}" nil t)
+    (folding-add-to-marks-list 'fortran-mode           "! {{{"  "! }}}" nil t)
+    (folding-add-to-marks-list 'f90-mode               "! {{{"  "! }}}" nil t)
+    (folding-add-to-marks-list 'generic-mode           ";# "    ";\$" nil t)
+    (folding-add-to-marks-list 'gofer-mode             "-- {{{" "-- }}}" nil t)
+    (folding-add-to-marks-list 'html-mode   "<!-- {{{ " "<!-- }}} -->" " -->" t)
+    (folding-add-to-marks-list 'icon-mode              "# {{{" "# }}}" nil t)
+    (folding-add-to-marks-list 'indented-text-mode     "{{{"    "}}}" nil t)
+    (folding-add-to-marks-list 'java-mode              "// {{{" "// }}}" nil t)
+    (folding-add-to-marks-list 'javascript-mode        "// {{{" "// }}}" nil t)
+    (folding-add-to-marks-list 'jde-mode               "// {{{" "// }}}" nil t)
+    (folding-add-to-marks-list 'ksh-mode               "# {{{"  "# }}}" nil t)
+    (folding-add-to-marks-list 'latex-mode             "%{{{"   "%}}}" nil t)
+    (folding-add-to-marks-list 'lisp-interaction-mode  ";;{{{"  ";;}}}" nil t)
+    (folding-add-to-marks-list 'lisp-mode              ";;{{{"  ";;}}}" nil t)
+    (folding-add-to-marks-list 'm4-mode                "# {{{" "# }}}" nil t)
+    (folding-add-to-marks-list 'makefile-mode          "# {{{"  "# }}}" nil t)
+    (folding-add-to-marks-list 'matlab-mode            "%%%{{{" "%%%}}}" nil t)
+    (folding-add-to-marks-list 'meta-mode              "% {{{" "% }}}" nil t)
+    (folding-add-to-marks-list 'ml-mode                "(* {{{" "(* }}} *)" " *)" t)
+    (folding-add-to-marks-list 'modula-2-mode          "(* {{{" "(* }}} *)" " *)" t)
+    (folding-add-to-marks-list 'nroff-mode             "\\\\ {{{" "\\\\ }}}" nil t)
+    (folding-add-to-marks-list 'occam-mode             "-- {{{" "-- }}}" nil t)
+    (folding-add-to-marks-list 'orwell-mode            "{{{"    "}}}" nil t)
+    (folding-add-to-marks-list 'pascal-mode            "{ ((( " "{ ))) }" " }" t)
+    (folding-add-to-marks-list 'php-mode               "// {{{" "// }}}" nil t)
+    (folding-add-to-marks-list 'perl-mode              "# {{{"  "# }}}" nil t)
+    (folding-add-to-marks-list 'plain-TeX-mode         "%{{{"   "%}}}" nil t)
+    (folding-add-to-marks-list 'plain-tex-mode         "%{{{"   "%}}}" nil t)
+    (folding-add-to-marks-list 'prolog-mode            "% {{{"   "% }}}" nil t)
+    (folding-add-to-marks-list 'python-mode            "# {{{"  "# }}}" nil t)
+    (folding-add-to-marks-list 'rexx-mode              "/* {{{" "/* }}} */" " */" t)
+    (folding-add-to-marks-list 'sh-mode                "# {{{"  "# }}}" nil t)
+    (folding-add-to-marks-list 'sh-script-mode         "# {{{"  "# }}}" nil t)
+    (folding-add-to-marks-list 'shellscript-mode       "# {{{"  "# }}}" nil t)
+    (folding-add-to-marks-list 'sgml-mode   "<!-- [[[ " "<!-- ]]] -->" " -->" t)
+    (folding-add-to-marks-list 'simula-mode            "! {{{"  "! }}}" nil t)
+    (folding-add-to-marks-list 'sml-mode               "(* {{{" "(* }}} *)" " *)" t)
+    (folding-add-to-marks-list 'sql-mode               "-- {{{"  "-- }}}" nil t)
+    (folding-add-to-marks-list 'tcl-mode               "#{{{"   "#}}}" nil t)
+    (folding-add-to-marks-list 'tex-mode               "%{{{"   "%}}}" nil t)
+    (folding-add-to-marks-list 'texinfo-mode   "@c {{{" "@c {{{endfold}}}" " }}}" t)
+    (folding-add-to-marks-list 'text-mode              "{{{"    "}}}" nil t)
+    (folding-add-to-marks-list 'vhdl-mode              "# {{{"  "# }}}" nil t)
+    (folding-add-to-marks-list 'xerl-mode              "%%{{{"  "%%}}}" nil t)
+    (folding-add-to-marks-list 'xrdb-mode              "! {{{"  "! }}}" nil t)
+
     #+END_SRC
 
 ** DISABLED origami
@@ -1440,59 +1273,6 @@ _*_ heading
 #+END_SRC
 
 
-* desktop mode
-** desktop mode
-#+BEGIN_SRC emacs-lisp
-  (desktop-save-mode 1)
-
-
-  #+END_SRC* shell mode
-
-** send region to shell 
-
-  (add-hook 'comint-output-filter-functions
-  'comint-strip-ctrl-m)
-
-  (defun sh-send-line-or-region (&optional step)
-  (interactive ())
-  (let ((proc (get-process "shell"))
-  pbuf min max command)
-  (unless proc
-  (let ((currbuff (current-buffer)))
-  (shell)
-  (switch-to-buffer currbuff)
-  (setq proc (get-process "shell"))
-  ))
-  (setq pbuff (process-buffer proc))
-  (if (use-region-p)
-  (setq min (region-beginning)
-  max (region-end))
-  (setq min (point-at-bol)
-  max (point-at-eol)))
-  (setq command (concat (buffer-substring min max) "\n"))
-  (with-current-buffer pbuff
-  (goto-char (process-mark proc))
-  (insert command)
-  (move-marker (process-mark proc) (point))
-  ) ;;pop-to-buffer does not work with save-current-buffer -- bug?
-  (process-send-string  proc command)
-  (display-buffer (process-buffer proc) t)
-  (when step 
-  (goto-char max)
-  (next-line))
-  ))
-
-  (defun sh-send-line-or-region-and-step ()
-  (interactive)
-  (sh-send-line-or-region t))
-  (defun sh-switch-to-process-buffer ()
-  (interactive)
-  (pop-to-buffer (process-buffer (get-process "shell")) t))
-
-  ;; # (define-key sh-mode-map [(control ?j)] 'sh-send-line-or-region-and-step)
-  ;; # (define-key sh-mode-map [(control ?c) (control ?z)] 'sh-switch-to-process-buffer)
-
-
 * MISC
 ** IMenu
 imenu-anywhere provides navigation for imenu tags across all buffers
@@ -1504,11 +1284,8 @@ defined list of friendly mode buffers.
 #+END_SRC
 
 ** goto last change
-sr-speedbar-open
-
 #+BEGIN_SRC emacs-lisp
 ; (require 'goto-last-change)
 
 #+END_SRC
 
-** examples 

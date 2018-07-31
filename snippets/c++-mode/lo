@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: lo
+# key: lo
+# --
+
+LOG_L("{%s}",  "$1`yas-selected-text`" );

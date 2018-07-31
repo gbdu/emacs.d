@@ -25,6 +25,7 @@
  '(fci-rule-color "#383838")
  '(frame-background-mode (quote dark))
  '(global-linum-mode t)
+ '(keypad-setup 46 nil (keypad))
  '(linum-format "%4d  ")
  '(minibuffer-prompt-properties
    (quote
@@ -35,7 +36,7 @@
  '(org-log-into-drawer t)
  '(package-selected-packages
    (quote
-    (undo-tree yasnippet-snippets rotate cmake-mode perspective auctex org-ac headlong ace-window org-bullets ac-helm autopair babel hydra which-key ox-reveal auto-yasnippet org-brain pc-bufsw buffer-stack helm-w3m sublime-themes go-mode gnugo go doremi-frm evil-magit vdiff-magit magit helm-dired-recent-dirs helm-dired-history ripgrep company-c-headers company projectile-speedbar sr-speedbar function-args helm-gtags ggtags doremi-cmd doremi projector projectile helm-projectile svg-clock winnow ag dumb-jump expand-region virtualenv folding flymake-lua xclip elpy fzf fasd bookmark+ helm-bm pdf-tools auto-complete-clang auto-complete-c-headers auto-complete helm switch-window dracula-theme)))
+    (fold-dwim-org fold-dwim htmlize slime org-elisp-help elpa-mirror ecb workgroups2 helm-xref pelican-mode ox-rst goto-last-change helm-company imenu-anywhere company-shell c-eldoc flycheck-irony irony-eldoc company-irony-c-headers company-irony irony srefactor glsl-mode lua-mode undo-tree yasnippet-snippets rotate cmake-mode auctex org-ac headlong ace-window org-bullets autopair babel hydra which-key ox-reveal auto-yasnippet org-brain pc-bufsw buffer-stack helm-w3m sublime-themes go-mode gnugo go doremi-frm evil-magit vdiff-magit magit helm-dired-recent-dirs helm-dired-history ripgrep company-c-headers company projectile-speedbar sr-speedbar function-args helm-gtags ggtags doremi-cmd doremi projector projectile helm-projectile svg-clock winnow ag dumb-jump expand-region virtualenv folding flymake-lua xclip elpy fzf fasd bookmark+ helm-bm pdf-tools auto-complete-clang auto-complete-c-headers auto-complete helm switch-window dracula-theme)))
  '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
  '(show-paren-mode t)
  '(sr-speedbar-max-width 0 t)

@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: l
+# key: l
+# --
+
+LOG_L("{$1}");
