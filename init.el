@@ -1,8 +1,10 @@
 (require 'package)
 
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+
 (when (< emacs-major-version 24)
   (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
+
 (package-initialize)
 
 
@@ -25,7 +27,10 @@
  '(fci-rule-color "#383838")
  '(frame-background-mode (quote dark))
  '(global-linum-mode t)
+ '(keypad-numlock-setup 46 nil (keypad))
+ '(keypad-numlock-shifted-setup (quote S-cursor) nil (keypad))
  '(keypad-setup 46 nil (keypad))
+ '(keypad-shifted-setup 46 nil (keypad))
  '(linum-format "%4d  ")
  '(minibuffer-prompt-properties
    (quote
@@ -36,8 +41,9 @@
  '(org-log-into-drawer t)
  '(package-selected-packages
    (quote
-    (fold-dwim-org fold-dwim htmlize slime org-elisp-help elpa-mirror ecb workgroups2 helm-xref pelican-mode ox-rst goto-last-change helm-company imenu-anywhere company-shell c-eldoc flycheck-irony irony-eldoc company-irony-c-headers company-irony irony srefactor glsl-mode lua-mode undo-tree yasnippet-snippets rotate cmake-mode auctex org-ac headlong ace-window org-bullets autopair babel hydra which-key ox-reveal auto-yasnippet org-brain pc-bufsw buffer-stack helm-w3m sublime-themes go-mode gnugo go doremi-frm evil-magit vdiff-magit magit helm-dired-recent-dirs helm-dired-history ripgrep company-c-headers company projectile-speedbar sr-speedbar function-args helm-gtags ggtags doremi-cmd doremi projector projectile helm-projectile svg-clock winnow ag dumb-jump expand-region virtualenv folding flymake-lua xclip elpy fzf fasd bookmark+ helm-bm pdf-tools auto-complete-clang auto-complete-c-headers auto-complete helm switch-window dracula-theme)))
+    (helm-ag outshine neotree fold-dwim-org fold-dwim htmlize slime org-elisp-help elpa-mirror ecb workgroups2 helm-xref pelican-mode ox-rst goto-last-change helm-company imenu-anywhere company-shell c-eldoc flycheck-irony irony-eldoc company-irony-c-headers company-irony irony srefactor glsl-mode lua-mode undo-tree yasnippet-snippets rotate cmake-mode auctex org-ac headlong ace-window org-bullets autopair babel hydra which-key ox-reveal auto-yasnippet org-brain pc-bufsw buffer-stack helm-w3m sublime-themes go-mode gnugo go doremi-frm evil-magit vdiff-magit magit helm-dired-recent-dirs helm-dired-history ripgrep company-c-headers company projectile-speedbar sr-speedbar function-args helm-gtags ggtags doremi-cmd doremi projector projectile helm-projectile svg-clock winnow ag dumb-jump expand-region virtualenv folding flymake-lua xclip elpy fzf fasd bookmark+ helm-bm pdf-tools auto-complete-clang auto-complete-c-headers auto-complete helm switch-window dracula-theme)))
  '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
+ '(recentf-mode t)
  '(show-paren-mode t)
  '(sr-speedbar-max-width 0 t)
  '(vc-annotate-background "#2B2B2B")
@@ -75,5 +81,4 @@
  '(mode-line-inactive ((t (:foreground "#f9f9f9" :background "#353535" :box nil))))
  '(powerline-grey40-white ((t (:background "black" :foreground "white" :box nil))) t)
  '(show-paren-match ((t (:background "#141419")))))
-
 

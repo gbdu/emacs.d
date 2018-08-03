@@ -526,7 +526,44 @@ Frames: _f_rame new  _df_ delete
  (add-hook 'compilation-mode-hook 'winnow-mode) ;; for winnow
 
  #+END_SRC
+ 
+** outline window 
+#+BEGIN_SRC emacs-lisp
+(defun my/open-tree-view ()
+  "Open a clone of the current buffer to the left, resize it to 30 columns, and bind <mouse-1> to jump to the same position in the base buffer."
+  (interactive)
+  (let ((new-buffer-name (concat "<tree>" (buffer-name))))
+    ;; Create tree buffer
+    (split-window-right 30)
+    (if (get-buffer new-buffer-name)
+        (switch-to-buffer new-buffer-name)  ; Use existing tree buffer
+      ;; Make new tree buffer
+      (progn  (clone-indirect-buffer new-buffer-name nil t)
+              (switch-to-buffer new-buffer-name)
+              (read-only-mode)
+              (hide-body)
+              (toggle-truncate-lines)
 
+              ;; Do this twice in case the point is in a hidden line
+              (dotimes (_ 2 (forward-line 0)))
+)))) 
+
+(defun my/jump-to-point-and-show ()
+  "Switch to a cloned buffer's base buffer and move point to the cursor position in the clone."
+  (interactive)
+  (let ((buf (buffer-base-buffer)))
+    (unless buf
+      (error "You need to be in a cloned buffer!"))
+    (let ((pos (point))
+          (win (car (get-buffer-window-list buf))))
+      (if win
+          (select-window win)
+        (other-window 1)
+        (switch-to-buffer buf))
+      (goto-char pos)
+      (when (invisible-p (point))
+        (show-branches)))))
+#+END_SRC
 * helm
 #+BEGIN_SRC emacs-lisp
 (require 'helm)

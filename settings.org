@@ -106,7 +106,7 @@ text and copying to the killring."
 	    (if (not (bolp)) (forward-line 1))
 	    (delete-whitespace-rectangle (point) end nil)))
 
-(find-function-at-point)
+
 #+END_SRC 
 ** Kill whitespace
 #+BEGIN_SRC emacs-lisp
@@ -177,12 +177,8 @@ text and copying to the killring."
 
 
 #+END_SRC
-** help+
-#+BEGIN_SRC emacs-lisp
-(require 'help+)
 
-#+END_SRC
-** F1 Hydra (easy access)
+** org-agenda-cts
 #+BEGIN_SRC emacs-lisp
   (defun org-agenda-cts ()
     (let ((args (get-text-property
@@ -190,42 +186,120 @@ text and copying to the killring."
                  'org-last-args)))
       (nth 2 args)))
 #+END_SRC 
+** open-tree-view
+#+BEGIN_SRC emacs-lisp
+(defun open-tree-view ()
+  "Open a clone of the current buffer to the left, resize it to 30 columns, and bind <mouse-1> to jump to the same position in the base buffer."
+  (interactive)
+  (let ((new-buffer-name (concat "<tree>" (buffer-name))))
+    ;; Create tree buffer
+    (split-window-right 30)
+    (if (get-buffer new-buffer-name)
+        ((switch-to-buffer new-buffer-name))  ; Use existing tree buffer
+      ;; Make new tree buffer
+      (progn  (clone-indirect-buffer new-buffer-name nil t)
+              (switch-to-buffer new-buffer-name)
+              (read-only-mode)
+              (hide-body)
+              (toggle-truncate-lines)
+
+              ;; Do this twice in case the point is in a hidden line
+              (dotimes (_ 2 (forward-line 0)))
+
+              ;; Map keys
+              (use-local-map (copy-keymap outline-mode-map))
+              (local-set-key (kbd "q") 'delete-window)
+              (mapc (lambda (key) (local-set-key (kbd key) 'jump-tree-view))
+                    '("<mouse-1>" "RET"))))))
+#+END_SRC
+** jump-tree-view
+#+BEGIN_SRC emacs-lisp
+(defun jump-tree-view()
+  "Switch to a cloned buffer's base buffer and move point to the cursor position in the clone."
+  (interactive)
+  (let ((buf (buffer-base-buffer)))
+    (unless buf
+      (error "You need to be in a cloned buffer!"))
+    (let ((pos (point))
+          (win (car (get-buffer-window-list buf))))
+      (if win
+          (select-window win)
+        (other-window 1)
+        (switch-to-buffer buf))
+      (goto-char pos)
+      (when (invisible-p (point))
+        (show-branches)))))
+#+END_SRC
+
+   #+BEGIN_SRC emacs-lisp
+
+     ;; (require 'origami)
+     ;; (add-hook 'c++-mode-hook (lambda () (setq-local origami-fold-style 'triple-braces)))
+     ;; (global-origami-mode)
+
+     ;; (defhydra helper-hydra-origami (:color blue 
+     ;; global-map "<kp-subtract>")
+     ;; "origami"
+     ;; ("<kp-multiply>" origami-toggle-all-nodes)
+     ;; ("<kp-divide>" origami-open-all-nodes)
+
+     ;; ("w" origami-previous-fold)
+     ;; ("s" origami-next-fold)
+     ;; ("<kp-subtract>" origami-recursively-toggle-node)
+     ;; ("C-<kp-5>" origami-show-only-node)
+     ;; ("TAB" origami-recursively-toggle-node)
+
+     ;; )
+
+#+END_SRC
 * Helper hydras
 ** Outline
- #+BEGIN_SRC emacs-lisp
- (defhydra hydra-outline (:color pink :hint nil)
-  "
-^Hide^             ^Show^           ^Move
-^^^^^^------------------------------------------------------
-_q_: sublevels     _a_: all         _u_: up
-_t_: body          _e_: entry       _n_: next visible
-_o_: other         _i_: children    _p_: previous visible
-_c_: entry         _k_: branches    _f_: forward same level
-_l_: leaves        _s_: subtree     _b_: backward same level
-_d_: subtree
+    "
+  ^Hide^                      ^Show^          ^Move
+  ^^^^^^----------------------------------------------------------------
+   _aa_: All sublevels   _a_:  all (everything)                         _w_/_W_: up
+   _ab_: All body lines  _<f6>_:  all (subheadings)          _d_/_D_: down
+   _tb_: Hide this body  _e_:  show entry 
+   _ho_: Hide others     
+   _P_: Hide leaves     _P_:  branches/subheaadings
+   _T_: Hide subtree    _t_:  subtree 
 
+  "
+
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-outline (:color pink :columns 3 )
 "
-  ;; Hide
-  ("q" hide-sublevels)    ; Hide everything but the top-level headings
-  ("t" hide-body)         ; Hide everything but headings (all body lines)
-  ("o" hide-other)        ; Hide other branches
-  ("c" hide-entry)        ; Hide this entry's body
-  ("l" hide-leaves)       ; Hide body lines in this entry and sub-entries
-  ("d" hide-subtree)      ; Hide everything in this entry and sub-entries
-  ;; Show
-  ("a" show-all)          ; Show (expand) everything
-  ("e" show-entry)        ; Show this heading's body
-  ("i" show-children)     ; Show this heading's immediate child sub-headings
-  ("k" show-branches)     ; Show all sub-headings under this heading
-  ("s" show-subtree)      ; Show (expand) everything in this heading & below
-  ;; Move
-  ("u" outline-up-heading)                ; Up
-  ("n" outline-next-visible-heading)      ; Next
-  ("p" outline-previous-visible-heading)  ; Previous
-  ("f" outline-forward-same-level)        ; Forward - same level
-  ("b" outline-backward-same-level)       ; Backward - same level
-  ("z" nil "leave"))
- #+END_SRC
+^Hide                                  ^Show              ^Move
+_*_:Hide everything but top-level
+_
+"
+    ;; Hide
+    ("7" hide-sublevels "Hide everything but the top-level headings")
+    ("4" hide-body     "Hide everything but headings (all body lines)")
+    ("E" hide-entry    "Hide this entry's body")
+    ("C" hide-other    "Hide other branches")
+    ("B" hide-leaves   "Hide body lines in this entry and sub-entries")
+    ("T" hide-subtree  "Hide everything in this entry and sub-entries")
+    ;; Show
+    ("a" show-all          " Show (expand) everything")
+    ("b" show-branches     "Show all sub-headings under this heading")
+    ("t" show-subtree      "Show (expand) everything in this heading & below")
+    ("e" show-entry        "Show this heading's body")
+    ("c" show-children     "Show this heading's immediate child sub-headings")
+
+    ;; Move
+    ("w" outline-backward-same-level "backwards")       ; Backward - same level
+    ("W" outline-up-heading "Up")                ; Up
+    ("d" outline-forward-same-level "forward")        ; Forward - same level
+    ("D" outline-next-heading "next")
+    ("q" nil "leave") )
+  ;;  ("s" outline-next-visible-heading)      ; Next
+  ;;  ("w" outline-previous-visible-heading)  ; Previous
+
+
+   #+END_SRC
+***** DATE NICE
+
 ** Fonts hydra
 #+BEGIN_SRC emacs-lisp
 (defhydra helper-hydra-fonts (:body-pre (message "fonts"))
@@ -510,22 +584,33 @@ Frames: _f_rame new  _df_ delete
   ("m" yas/minor-mode)
   ("a" yas-reload-all))
 #+END_SRC
-** persp helper hydra
+
+** settings hydra 
 #+BEGIN_SRC emacs-lisp
+(defhydra helper-hydra-settings (:color blue :hint nil)
+  "
+              ^Settings^
+--------------------------------------------
+Edit:                       Reload:
+_<f1>_: Emacs               _x_modmap and keyboard 
+_o_: openbox rc.xml         _<f2>_:emacs 
+_z_: ~/.zshrc
+_s_: ~/scripts
+_g_: general
+  
+"
+("<f1>" ((lambda () (interactive) (find-file "~/.emacs.d/settings.org"))))
+("o" ((lambda () (interactive) (find-file "~/.config/openbox/rc.xml"))))
+("z" ((lambda () (interactive) (find-file "~/.zshrc"))))
+("g" ((lambda () (interactive) (find-file "~/org/general.org"))))
+("s" ((lambda () (interactive) (helm-find-files "~/scripts/"))))
+("x" (lambda () (interactive) (shell-command "keyboard_config.sh" ) ) )
+("<f2>" helper-reload-settings)
+)
 
 
 #+END_SRC
-** Require
-*** switch-window
- #+BEGIN_SRC emacs-lisp
- (require 'switch-window)
 
- (winner-mode 1)
-
- (add-hook 'ag-mode-hook 'winnow-mode)
- (add-hook 'compilation-mode-hook 'winnow-mode) ;; for winnow
-
- #+END_SRC
 
 * helm
 #+BEGIN_SRC emacs-lisp
@@ -538,7 +623,6 @@ Frames: _f_rame new  _df_ delete
 (global-unset-key (kbd "C-x c"))
 
 (global-set-key      (kbd "<f7>")  'helm-command-prefix) ;; menu key
-
 (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to run persistent action
 (define-key helm-map (kbd "C-i")   'helm-execute-persistent-action) ; make TAB work in terminal
 (define-key helm-map (kbd "C-z")   'helm-select-action) ; list actions using C-z
@@ -578,15 +662,15 @@ helm-echo-input-in-header-line t)
 |                 |              |                 |   |
 |-----------------+--------------+-----------------+---|
 | 7   prev-buffer | 8            | 9 next-buffers  |   |
-|                 | fold/node    |                 | + |
+|                 |              |                 | + |
 | C-7 switch-prev |              | C-9 global mark |   |
 |-----------------+--------------+-----------------+---|
 | 4               | 5            | 6               |   |
-| last change     | folding      | last mark       |   |
+| last change     |              | last mark       |   |
 |                 |              |                 |   |
 |-----------------+--------------+-----------------+---|
 | 1               | 2            | 3               |   |
-| mark ring       | fold/node    | fold mode       | E |
+| mark ring       |              | fold mode       | E |
 |                 |              | C-3             | N |
 |-----------------+--------------+-----------------+---|
 | 0 imenu         | .    snippet |                 | E |
@@ -597,100 +681,116 @@ helm-echo-input-in-header-line t)
 *** SRC
 #+BEGIN_SRC emacs-lisp
 
-(global-set-key [NumLock] 'next-buffer)
+  (global-set-key [NumLock] 'next-buffer)
 
-  ;;; / deals with layouts
-      (global-set-key [kp-divide] 'window-configuration-to-register)
-      (global-set-key [C-kp-divide] 'jump-to-register)
-    ;; * kill window and buffer
-      (global-set-key (kbd "C-*") 'destroy-win)
-    ;; 4-6 edit, mark change positions
-      (global-set-key [kp-4] 'goto-last-change) ; last change
-      (global-set-key [kp-6] 'xah-pop-local-mark-ring) ; last mark
-    ;; 7-9 next/prev buffer for this window ...
-      (global-set-key [kp-7] 'next-buffer) 
-      (global-set-key [kp-9] 'previous-buffer)
-    ;; c 7-9 go back in buffers ...
-      (global-set-key [C-kp-7] 'switch-to-previous-buffer)
-      (global-set-key [C-kp-9] 'pop-global-mark)
-    ;; 8/2 next/prev defun
-      (global-set-key [C-kp-2] 'end-of-defun)
-      (global-set-key [C-kp-8] 'beginning-of-defun) 
-    ;; ctrl 8/2 out-in folding
+  ;;; * deals with layouts
+        ;; (global-set-key [kp-divide] 'window-configuration-to-register) ;
+        ;; (global-set-key [C-kp-divide] 'jump-to-register)
+      ;; * kill window and buffer
+        (global-set-key (kbd "C-*") 'destroy-win)
+      ;; 4-6 edit, mark change positions
+        (global-set-key [kp-6] 'pop-global-mark) ; 
+        (global-set-key [kp-4] 'xah-pop-local-mark-ring) ; last mark
+        (global-set-key [kp-left] 'pop-global-mark) ; last change
+        (global-set-key [kp-right] 'xah-pop-local-mark-ring) ; last mark
 
 
-    ;; (global-set-key [kp-2] 'outline-previous-visible-heading)
-    ;; (global-set-key [kp-8] 'outline-next-visible-heading) 
+      ;; 7-9 next/prev6 buffer for this window ...
+        (global-set-key [kp-7] 'next-buffer) 
+        (global-set-key [kp-9] 'previous-buffer)
+      
+;; c 7-9 go back in buffers ...
+        (global-set-key [C-kp-7] 'switch-to-previous-buffer)
+        (global-set-key [C-kp-9] 'pop-global-mark)
+        (global-set-key [C-kp-home] 'switch-to-previous-buffer)
+        (global-set-key [C-kp-prior] 'pop-global-mark)
 
-    ;; 1 - misc
-      (global-set-key [kp-1] 'helm-all-mark-rings)
-      (global-set-key [C-kp-1] 'find-file-at-point)
-    ;; 3 - fold 
-      (global-set-key [C-kp-3] 'folding-mode)
-      (global-set-key [kp-3] 'folding-fold-region)
-    ;; f12
-      (global-set-key (kbd "<f12>") 'helm-mini)
-      (global-set-key (kbd "<C-f12>") 'fasd-find-file)
-      (global-set-key (kbd "C-j") 'join-line)
-    ;; folding toggle enter exit
-  ;;  (global-set-key [C-kp-5] 'folding-toggle-enter-exit)
-  ;;  (global-set-key [kp-5] 'folding-toggle-show-hide)
+      ;; 8/2 next/prev defun
+        (global-set-key [C-kp-2] 'end-of-defun)
+        (global-set-key [C-kp-8] 'beginning-of-defun) 
+      ;; 8/2 next/prev 3
+        (global-set-key [kp-2] 'forward-sexp)
+        (global-set-key [kp-8] 'backward-sexp)
+      ;; 8/2 next/prev defun
+        (global-set-key [C-kp-down] 'end-of-defun)
+        (global-set-key [C-kp-up] 'beginning-of-defun) 
 
-    ;; dot/end for snippets
-      (global-set-key [kp-decimal] 'yas/insert-snippet)
-      (global-set-key [C-kp-decimal] 'yas-new-snippet)
 
-    ;; zero for imenu 
-      (global-set-key [kp-0] 'helm-semantic-or-imenu) 
-      (global-set-key [C-kp-0] 'helm-imenu-anywhere) 
 
-     ;;  (global-set-key [kp-multiply] 'pop-global-mark) ; Meta+7 
-    ;;  (global-set-key [kp-divide] 'goto-last-change)
-    ;;  (global-set-key [kp-decimal] 'helm-occur)
+      ;; 8/2 next/prev 
+        (global-set-key [kp-down] 'forward-sexp)
+        (global-set-key [kp-up] 'backward-sexp)
 
-    
+        ;; ctrl 8/2 out-in folding
+
+
+      ;; (global-set-key [kp-2] 'outline-previous-visible-heading)
+      ;; (global-set-key [kp-8] 'outline-next-visible-heading) 
+
+      ;; 1 - misc
+        (global-set-key [kp-1] 'helm-all-mark-rings)
+        (global-set-key [C-kp-1] 'find-file-at-point)
+      ;; 3 - fold 
+        ;; (global-set-key [C-kp-3] 'folding-mode)
+        ;; (global-set-key [kp-3] 'folding-fold-region)
+      ;; f12aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaasd
+        (global-set-key (kbd "<f12>") 'helm-mini)
+        (global-set-key (kbd "<C-f12>") 'fasd-find-file)
+        (global-set-key (kbd "C-j") 'join-line)
+      ;; folding toggle enter exit    
+    ;;  (global-set-key [C-kp-5] 'folding-toggle-enter-exit)
+    ;;  (global-set-key [kp-5] 'folding-toggle-show-hide)
+
+      ;; dot/end for snippets
+        (global-set-key [kp-decimal] 'yas/insert-snippet)
+        (global-set-key [C-kp-decimal] 'yas-new-snippet)
+
+      ;; zero for imenu 
+        (global-set-key [kp-0] 'helm-imenu) 
+        (global-set-key [C-c kp-0] 'helm-semantic-or-imenu) 
+        (global-set-key [C-kp-0] 'helm-imenu-anywhere)   
+
+       ;;  (global-set-key [kp-multiply] 'pop-global-mark) ; Meta+7 
+      ;;  (global-set-key [kp-divide] 'goto-last-change)
+      ;;  (global-set-key [kp-decimal] 'helm-occur)
+
+
 #+END_SRC
 
-** ralt navigation hydra
+** avy keys
 #+BEGIN_SRC emacs-lisp
 
-
-;; (setq avy-keys (number-sequence ?1 ?z) )
-
+ (require 'hydra-ox)
+(setq avy-keys '( ?1 ?2 ?3 ?4 ?5 ?q ?w ?e ?r ?t ?a ?s ?d ?f ?x ?c))
 (setq avy-all-windows nil)
 
-(defhydra hydra-navigation (:color pink :hint nil)
-"
-^GOTO^             ^REFILE^           ^Move
-^^^^^^-------------^----^----------------------------------
-_-_ line
-_+_ line  
-_*_ heading 
+#+END_SRC 
+** navigation hydra 
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-navigation (:color pink)
 
-"
-;; GOTO
+ ( "+" outshine-insert-heading )
+ ( "*" outshine-toggle-comment )
+ ( "5" outline-toggle-children)
+ ( "2" outline-next-heading)
+ ("8" outline-previous-heading)
 
-( "-" avy-goto-line :color blue)    
-( "<f6>" avy-goto-line :color blue)    
-( "+" avy-goto-char :color blue)
-("*" avy-org-goto-heading-timer :color blue)
-("5" avy-isearch)
+ ("6" outline-show-branches)
+ ("4" outline-g)
+ 
+ ("TAB" outshine-cycle-buffer)
+ ( "-" avy-resume)    
+ ("*" avy-org-goto-heading-timer :color blue)
+ ("q" nil "cancel" :color blue))
 
-;; Show
-;; ("a" show-all)          ; Show (expand) everything
-;; Move
-;;                   ("u" outline-up-heading)                ; Up
+ (global-set-key (kbd "C-+") 'avy-goto-char-timer)
+ (global-set-key [kp-multiply] 'avy-goto-word-0)
+ (global-set-key [kp-divide] 'avy-goto-char-2)
 
-
-)
-
-(global-set-key (kbd "<f6>") 'hydra-navigation/body)
-
-#+END_SRC
-
-(require 'hydra-ox)
-
-
+ (global-set-key (kbd "C-<f6>") 'hydra-outline/body)
+ (global-set-key (kbd "<f6>") 'hydra-navigation/body)
+ 
+ #+END_SRC
 ** ralt map
 #+BEGIN_SRC emacs-lisp
 (global-set-key [f8] 'raltmap)
@@ -755,18 +855,15 @@ _*_ heading
 
 
    #+END_SRC
-** F1 hydra 
+** F1 map 
+*** secondary hydra
  #+BEGIN_SRC emacs-lisp
 
     (defhydra helper-hydra-org-utils (:color blue)
 
-        ("<f5>" my/copy-id-to-clipboard "Copy headline ID")
+        ("1" my/copy-id-to-clipboard "Copy headline ID")
         ("c" org-capture "Capture note")
         ("I" my/org-add-ids-to-headlines-in-file "ID all headlines")
-        ("aaa" org-agenda "Agenda show")
-
-      ;; ("<f3>" org-clock-in-last "Clock in last")
-       ("TAB" outline-next-visible-heading "next heading")
        ("T" org-agenda-show-tags-in-columns  "Agenda tags")
        ("j" org-adjust-region "Adjust list in region")
     )
@@ -777,45 +874,64 @@ _*_ heading
     )
   
 #+END_SRC 
-** f1 hydra 
+*** f1 hydra 
  #+BEGIN_SRC emacs-lisp
- 
-(defhydra hydra-f1 (:color blue :timeout 12 :hint none)
+ (defhydra hydra-f1 (:color blue :timeout 12 :hint none)
 "
- ^HYDRAS                   ^Find                          ^Misc        
- _r_ rectangle hydra       ^ _<f1>_ find-function               
- _s_ yassnippet hydra      ^ _<f2>_ apropos                          
- _w_ window hydra          ^ _<f3>_ find file in dir                 
- _t_ transpose hydra       ^ _<f4>_ web search                       
- _o_ org hydra                                             ^  _R_ reload  
-
+ ^HYDRAS                   ^Find                              ^Misc        
+ _<f1>_ Settings hydra      _fd_ find-function                _<f2>_ and _C-<f2>_: ace (window management)
+ _r_ rectangle mode         _df_ describe-function            _wf_ bookmarks (other window)
+ _T_ transpose hydra        _<f5>_ helm apro0pos              _ww_ helm bookmarks
+ _s_ yassnippet hydra       _ds_ Describe snippet table       _ws_ bookmark set
+ _1_ window hydra           _ii_ info at point (helm)         _tv_ tree view
+ _F_ fonts hydra            _io_ info (helm)                  _W_ webjump
+ _o_ org hydra              _ia_ info (apropos)               _R_ reload settings.org
+ _a_ agenda hydra                                           
 "      
+("<f1>" helper-hydra-settings/body "Settings Hydra")
 ("r" helper-hydra-rectangle/body "Rectangle hydra"  )
 ("s" helper-hydra-yasnippet/body "yasnippet hydra"  )
-("w" helper-hydra-window/body "Window hydra" )
-("f" helper-hydra-fonts/body "Change fonts" )
+("1" helper-hydra-window/body "Window hydra" )
+("F" helper-hydra-fonts/body "Change fonts" )
 ("o" helper-hydra-org-utils/body "org utils")
-("t" helper-hydra-transpose/body )
-("1" helper-hydra-org-agenda/body "Agenda hydra"  )
-
-("<f1>" find-function "find-function")
-("<f2>" info-apropos "info-apropos")
-("<f3>" helm-find )
+("T" helper-hydra-transpose/body )
+("a" helper-hydra-org-agenda/body "Agenda hydra"  )
+("<f5>" helm-apropos)
+("fd" find-function)
+("df" describe-function)
+("ds" yas-describe-tables)
+("ii" helm-info-at-point)
+("io" helm-info)
+("ia" info-apropos)
+("ff" helm-find )
+("wf" helm-bookmarks)
+("ws" bookmark-save)
+("ww" helm-filtered-bookmarks)
+("wf" headlong-bookmark-jump-other)
+("tv" open-tree-view)
+("tt" jump-tree-view)
+("W" webjump)
+("<f2>" ace-window)
+("C-<f2>" ace-swap-window)
 ("<f4>" helper-hydra-web-search )
+("R" helper-reload-settings "Reload settings.org"))
 
-("R" helper-reload-settings "Reload settings.org")
+(global-set-key (kbd "<f1>") 'hydra-f1/body)
+
+
+
+
 
        ;; ("d" org-clock-display "Display clocking")
        ;; ("q" org-clock-cancel "Cancel a clock")
        ;; ("E" helper-hydra-ediff/body  "Ediff hydra" )
    ;;    ("<f1>" helper-hydra-navigation "Navy"  )
 
-       )
 
-       (global-set-key (kbd "<f1>") 'hydra-f1/body)
+
    #+END_SRC
 
-
+   
 ** disabled rctrl  
 #+BEGIN_SRC emacs-lisp
   ;; (define-key rctrlmap [left] 'helm-gtags-previous-history)
@@ -908,12 +1024,37 @@ _*_ heading
 #+END_SRC
 ** Misc maps
 * GLOBAL modes 
+** undo-tree
+#+BEGIN_SRC emacs-lisp
+
+(global-undo-tree-mode)
+(setq undo-tree-auto-save-history t)
+(setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
+
+
+#+END_SRC
+** save-place-mode: Remember place in buffer
+#+BEGIN_SRC emacs-lisp
+(require 'savehist)
+(add-to-list 'savehist-additional-variables 'helm-dired-history-variable)
+(savehist-mode 1)
+
+(setq savehist-additional-variables '(kill-ring search-ring regexp-search-ring))
+
+(save-place-mode 1)
+
+#+END_SRC
+** help+
+#+BEGIN_SRC emacs-lisp
+(require 'help+)
+
+#+END_SRC
 ** recentf
 #+BEGIN_SRC emacs-lisp
 (require 'recentf)
 (recentf-mode 1)
 (setq recentf-max-saved-items 1200)
-(setq recentf-max-menu-items 200)
+(setq recentf-max-menu-items 500)
 (setq recentf-auto-cleanup 'never)
 
 (run-at-time (current-time) 150 (let ((inhibit-message t)) 'recentf-save-list))
@@ -929,22 +1070,7 @@ _*_ heading
 
 ** which-key mode
 #+BEGIN_SRC emacs-lisp
-(which-key-mode)
-#+END_SRC
-
-
-** save-place-mode: Remember place in buffer
-#+BEGIN_SRC emacs-lisp
-
-(require 'savehist)
-
-(add-to-list 'savehist-additional-variables 'helm-dired-history-variable)
-(savehist-mode 1)
-
-(setq savehist-additional-variables '(kill-ring search-ring regexp-search-ring))
-
-(save-place-mode 1)
-
+;; (which-key-mode)
 #+END_SRC
 
 * Completion
@@ -1026,6 +1152,7 @@ _*_ heading
 #+END_SRC
 
 ** Yasnippet
+
 #+BEGIN_SRC emacs-lisp
 (require 'yasnippet)
 
@@ -1033,12 +1160,44 @@ _*_ heading
 
 (yas-global-mode 1)
 
-(setq nlinum-highlight-current-line t)
+
+(define-key yas-minor-mode-map (kbd "SPC") yas-maybe-expand)
+
+#+END_SRC
+* Defaults & style
+** Coding style
+#+BEGIN_SRC emacs-lisp
+(setq-default c-basic-offset 4)
+(setq c-default-style "linux" c-basic-offset 4)
+#+END_SRC
+** Tabs always work
+#+BEGIN_SRC emacs-lisp
+(setq tab-always-indent 't )
+#+END_SRC
+
+
+** Default www browser
+#+BEGIN_SRC emacs-lisp
+(setq browse-url-browser-function 'eww-browse-url)
+#+END_SRC
+
+** Backup options
+#+BEGIN_SRC emacs-lisp
+  ;; into one dir
+  (setq backup-directory-alist '(("" . "~/.emacs.d/emacs-backup")))
+
+  ;; (setq make-backup-files nil) ; stop creating backup~ files
+  ;; (setq auto-save-default nil) ; stop creating #autosave# files
+
+  ;; ;disable backup
+  ;; (setq backup-inhibited t)
+  ;; ;disable auto save
+  ;; (setq auto-save-default nil)
 
 #+END_SRC
 
-* Org mode
-** Options
+** Org mode 
+*** Options
 #+BEGIN_SRC emacs-lisp
 (setq org-cycle-separator-lines 0)
 (setq org-track-ordered-property-with-tag t)
@@ -1056,13 +1215,19 @@ _*_ heading
   (org-agenda arg "t"))
 
 #+END_SRC
-** startup 
+*** Indented and autofill
 #+BEGIN_SRC emacs-lisp
 (setq org-startup-indented t)
 (setq auto-fill-mode 1)
 #+END_SRC
 
-** capture templates
+*** org-adapt-indentation 
+#+BEGIN_SRC emacs-lisp
+;; org-cycle-separator-lines
+(setq org-adapt-indentation t)
+#+END_SRC
+
+*** capture templates
 #+BEGIN_SRC emacs-lisp
 (setq org-capture-templates (quote
     (("t" "Todo" entry
@@ -1078,17 +1243,40 @@ _*_ heading
       (file "~/org/templates/general")
       :empty-lines-after 1))))
 #+END_SRC
-** Agenda files
-#+BEGIN_SRC emacs-lisp
-(setq org-agenda-files (quote ("~/org")))
-#+END_SRC
-** org-adapt-indentation 
-#+BEGIN_SRC emacs-lisp
-;; org-cycle-separator-lines
-(setq org-adapt-indentation t)
-#+END_SRC
 
-* Visual settings
+** Enable mouse
+#+BEGIN_SRC emacs-lisp
+;; Mouse support:
+(require 'mouse)
+(xterm-mouse-mode 1)
+#+END_SRC
+** Stop ESC ESCP ESCP from destroying windows
+#+BEGIN_SRC emacs-lisp
+(defadvice keyboard-escape-quit (around my-keyboard-escape-quit activate)
+  (let (orig-one-window-p)
+    (fset 'orig-one-window-p (symbol-function 'one-window-p))
+    (fset 'one-window-p (lambda (&optional nomini all-frames) t))
+    (unwind-protect
+	ad-do-it
+      (fset 'one-window-p (symbol-function 'orig-one-window-p)))))
+#+END_SRC
+** Delete selection when typing 
+ #+BEGIN_SRC emacs-lisp
+ (delete-selection-mode 1)
+ #+END_SRC
+** Agenda files
+ #+BEGIN_SRC emacs-lisp
+ (setq org-agenda-files (quote ("~/org")))
+ #+END_SRC
+** Integrate xclipboard with X11
+ #+BEGIN_SRC emacs-lisp
+ (require 'xclip)
+ (xclip-mode 1)
+ (setq x-select-enable-clipboard t) ;; Ctrl+c in Linux X11
+ (setq x-select-enable-primary t) ;;selection in X11
+ #+END_SRC
+
+* Visual
 ** Theme zenburn
 #+BEGIN_SRC emacs-lisp
 (load-theme 'zenburn t)
@@ -1110,6 +1298,7 @@ _*_ heading
 #+BEGIN_SRC emacs-lisp
 (global-linum-mode 1)
 (setq linum-format "%4d  ") ;; no line
+(setq nlinum-highlight-current-line t)
 #+END_SRC
 ** powerline and modeline
 #+BEGIN_SRC emacs-lisp
@@ -1132,62 +1321,8 @@ _*_ heading
 (setq org-src-fontify-natively t)
 #+END_SRC
 *** DISABLED org-bullets
- (require 'org-bullets)
- (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
-* Defaults & style settings
-** Coding style
-#+BEGIN_SRC emacs-lisp
-(setq-default c-basic-offset 4)
-(setq c-default-style "linux" c-basic-offset 4)
-#+END_SRC
-** Tabs always work
-#+BEGIN_SRC emacs-lisp
-(setq tab-always-indent 't )
-#+END_SRC
-
-
-** Default www browser
-#+BEGIN_SRC emacs-lisp
-(setq browse-url-browser-function 'eww-browse-url)
-#+END_SRC
-
-** Backup options
-#+BEGIN_SRC emacs-lisp
-;; into one dir
-(setq backup-directory-alist '(("" . "~/.emacs.d/emacs-backup")))
-(setq make-backup-files nil) ; stop creating backup~ files
-(setq auto-save-default nil) ; stop creating #autosave# files
-
-;disable backup
-(setq backup-inhibited t)
-;disable auto save
-(setq auto-save-default nil)
-
-#+END_SRC
-
-** Enable mouse
-#+BEGIN_SRC emacs-lisp
-;; Mouse support:
-(require 'mouse)
-(xterm-mouse-mode 1)
-#+END_SRC
-** Stop ESC ESCP ESCP from destroying windows
-#+BEGIN_SRC emacs-lisp
-(defadvice keyboard-escape-quit (around my-keyboard-escape-quit activate)
-  (let (orig-one-window-p)
-    (fset 'orig-one-window-p (symbol-function 'one-window-p))
-    (fset 'one-window-p (lambda (&optional nomini all-frames) t))
-    (unwind-protect
-	ad-do-it
-      (fset 'one-window-p (symbol-function 'orig-one-window-p)))))
-#+END_SRC
-** Integrate xclipboard with X11
-#+BEGIN_SRC emacs-lisp
-(require 'xclip)
-(xclip-mode 1)
-(setq x-select-enable-clipboard t) ;; Ctrl+c in Linux X11
-(setq x-select-enable-primary t) ;;selection in X11
-#+END_SRC
+    (require 'org-bullets)
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 * C++ mode & code
 ** SREFACTOR 
 #+BEGIN_SRC emacs-lisp
@@ -1247,9 +1382,6 @@ _*_ heading
 (eval-after-load 'flycheck  '(add-hook 'flycheck-mode-hook 'flycheck-irony-setup))  (setq set-mark-command-repeat-pop t)
 
 #+END_SRC
-
-
-
 * Folding / hideshow  
 ** hide-show mode 
 #+BEGIN_SRC emacs-lisp
@@ -1263,14 +1395,9 @@ _*_ heading
       (when (eq 'code (overlay-get ov 'hs))
         (overlay-put ov 'help-echo
                      (buffer-substring (overlay-start ov)
- 		                      (overlay-end ov)))))
- 
+                                      (overlay-end ov)))))
+
     (setq hs-set-up-overlay 'display-code-line-counts)
-
-
-
-
-
 
 
     (defun toggle-selective-display (column)
@@ -1279,7 +1406,7 @@ _*_ heading
        (or column
            (unless selective-display
              (1+ (current-column))))))
-   
+
              (defun toggle-hiding (column)
       (interactive "P")
       (if hs-minor-mode
@@ -1289,8 +1416,8 @@ _*_ heading
               (hs-show-all))
         (toggle-selective-display column)))
 
-  (require 'hideshow-org)
-  (add-hook 'c++-mode-hook 'hs-minor-mode)
+  ;; (require 'hideshow-org)
+  ;; (add-hook 'c++-mode-hook 'hs-minor-mode)
 
 
       (require 'hideshowvis)
@@ -1319,7 +1446,28 @@ _*_ heading
            ;; where x is code, comments, t (both), or nil (neither)
            (setq hs-isearch-open 't)
 #+END_SRC
-** Folding-mode
+** outshine mode
+#+BEGIN_SRC emacs-lisp
+  (require 'dash)
+  (require 'outshine)
+
+  ;; Required for outshine
+  (add-hook 'outline-minor-mode-hook 'outshine-hook-function)
+
+  ;; Enables outline-minor-mode for *ALL* programming buffers
+  (add-hook 'prog-mode-hook 'outline-minor-mode)
+
+  ;; (advice-add 'outshine-narrow-to-subtree :before
+  ;;             (lambda (&rest args) (unless (outline-on-heading-p t)
+  ;;                                    (outline-previous-visible-heading 1))))
+  
+
+
+   (setq outshine-use-speed-commands t)
+
+
+#+END_SRC
+**** Folding-mode
 #+BEGIN_SRC emacs-lisp
   ;; (load "folding" 'nomessage 'noerror)
   ;; (folding-mode-add-find-file-hook)
@@ -1412,32 +1560,11 @@ _*_ heading
 
 
 #+END_SRC
-*** extra marks
+***** extra marks
  #+BEGIN_SRC emacs-lisp
     #+END_SRC
-
-** DISABLED origami
-   #+BEGIN_SRC emacs-lisp
-
-     ;; (require 'origami)
-     ;; (add-hook 'c++-mode-hook (lambda () (setq-local origami-fold-style 'triple-braces)))
-     ;; (global-origami-mode)
-
-     ;; (defhydra helper-hydra-origami (:color blue 
-     ;; global-map "<kp-subtract>")
-     ;; "origami"
-     ;; ("<kp-multiply>" origami-toggle-all-nodes)
-     ;; ("<kp-divide>" origami-open-all-nodes)
-
-     ;; ("w" origami-previous-fold)
-     ;; ("s" origami-next-fold)
-     ;; ("<kp-subtract>" origami-recursively-toggle-node)
-     ;; ("C-<kp-5>" origami-show-only-node)
-     ;; ("TAB" origami-recursively-toggle-node)
-
-     ;; )
-
-#+END_SRC
+    
+**** DISABLED origami
 
 
 * desktop mode
@@ -1447,6 +1574,30 @@ _*_ heading
 
 
   #+END_SRC* shell mode
+
+  
+* MISC
+** No startup screen 
+#+BEGIN_SRC emacs-lisp
+(setq inhibit-splash-screen 't)
+#+END_SRC
+
+** IMenu
+imenu-anywhere provides navigation for imenu tags across all buffers
+that satisfy a filtering criteria. Available criteria are - all
+buffers with the same major mode, same project buffers and user
+defined list of friendly mode buffers.
+
+#+BEGIN_SRC emacs-lisp
+#+END_SRC
+
+** goto last change
+
+
+#+BEGIN_SRC emacs-lisp
+; (require 'goto-last-change)
+
+#+END_SRC
 
 ** send region to shell 
 
@@ -1492,23 +1643,20 @@ _*_ heading
   ;; # (define-key sh-mode-map [(control ?j)] 'sh-send-line-or-region-and-step)
   ;; # (define-key sh-mode-map [(control ?c) (control ?z)] 'sh-switch-to-process-buffer)
 
-
-* MISC
-** IMenu
-imenu-anywhere provides navigation for imenu tags across all buffers
-that satisfy a filtering criteria. Available criteria are - all
-buffers with the same major mode, same project buffers and user
-defined list of friendly mode buffers.
-
-#+BEGIN_SRC emacs-lisp
-#+END_SRC
-
-** goto last change
-sr-speedbar-open
-
-#+BEGIN_SRC emacs-lisp
-; (require 'goto-last-change)
-
-#+END_SRC
-
 ** examples 
+
+* switch-window
+ #+BEGIN_SRC emacs-lisp
+ (require 'switch-window)
+
+ (winner-mode 1)
+
+ (add-hook 'ag-mode-hook 'winnow-mode)
+ (add-hook 'compilation-mode-hook 'winnow-mode) ;; for winnow
+
+
+ #+END_SRC
+ 
+
+
+
