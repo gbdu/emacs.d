@@ -278,24 +278,6 @@ helm-gtags-suggested-key-mapping t
 
 ;;; Completion & programming
 ;;;; company
-
-;;
-;;company-backends
-
-;; (require 'lsp-imenu)
-;; (add-hook 'lsp-after-open-hook 'lsp-enable-imenu)
-
-;; (defun my-company-add-backend-locally (backend)
-;;     "Add a backend in my custom way.
-
-;; \(my-company-add-backend-locally 'company-robe\)
-;; "
-;;     (if (local-variable-if-set-p 'company-backends)
-;;         (add-to-list 'company-backends `(,backend :with company-yasnippet))
-;;       (add-to-list (make-local-variable 'company-backends)
-;;                    `(,backend :with company-yasnippet))
-;;       ))
-
 (use-package company
   :config
   (progn
@@ -314,6 +296,7 @@ helm-gtags-suggested-key-mapping t
 (use-package lsp-mode
   :config (setq lsp-highlight-symbol-at-point nil))
 
+;;;; lsp-ui
 (use-package lsp-ui
   :init (add-hook 'lsp-after-open-hook #'lsp-ui-mode)
 ;;  :hook (lsp-mode . lsp-ui-mode)
@@ -326,6 +309,7 @@ helm-gtags-suggested-key-mapping t
     ;;    (setq lsp-ui-sideline-show-flycheck t)
     ))
     
+;;;; flycheck
 (use-package flycheck
         :ensure t
         :config
@@ -334,20 +318,11 @@ helm-gtags-suggested-key-mapping t
         (add-hook 'c++-mode-hook (lambda () (setq flycheck-checker 'lsp)))
         (add-hook 'c++-mode-hook (lambda() (flycheck-mode))))
 
-
+;;;; lsp-python
 (use-package lsp-python
   :hook (python-mode . lsp-python-enable) )
 
-
-;; (use-package company-lsp
-;;   :after (company)
-;;   :config
-;;   (progn
-;;     (add-to-list 'company-backends 'company-lsp)
-;;     (setq company-lsp-async 't)
-;;     (setq company-lsp-cache-candidates nil)))
-
-      
+;;;; company-lsp
 (use-package company-lsp
   :init
   (defun my:company-lsp-enable ()
@@ -485,15 +460,6 @@ helm-gtags-suggested-key-mapping t
 ;;;; SREFACTOR
 (require 'srefactor)
 (require 'srefactor-lisp)
-
-
-;; (define-key c-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
-;; (define-key c++-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
-
-;; (global-set-key (kbd "M-RET o") 'srefactor-lisp-one-line)
-;; (global-set-key (kbd "M-RET m") 'srefactor-lisp-format-sexp)
-;; (global-set-key (kbd "M-RET d") 'srefactor-lisp-format-defun)
-;; (global-set-key (kbd "M-RET b") 'srefactor-lisp-format-buffer)
 
 ;;;; ff-search-directories
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
@@ -859,56 +825,9 @@ _g_: general
 
 
 
-;;; Commented out
-;;;; ggtags (helm instead)
-;; (require 'ggtags)
-;; (add-hook 'c-mode-common-hook
-;;  (lambda ()
-;;   (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
-;;    (ggtags-mode 1)
-;; ;; (setq company-backends '(company-gtags company-capf company-yasnippet company-clang company-semantic company-c-headers company-files  ))
-;;   )
-;;  ))
-
-;;    (setq company-quickhelp-delay 0.2)
-
-;;  (company-quickhelp-mode)
-;; (setq company-backends '(company-semantic company-capf)) company-bbdb company-eclim
-;;    company-semantic company-clang company-xcode company-cmake
-;;    company-capf company-files (company-dabbrev-code company-gtags
-;;    company-etags company-keywords) company-oddmuse
-;;    company-dabbrev))
-
-;;   (setq company-backends '((company-capf company-files :with
-;;    company-yasnippet) (company-lsp company-dabbrev-code
-;;    company-dabbrev))) '(company-irony company-bbdb company-eclim
-;;    company-semantic company-clang company-xcode company-cmake
-;;    company-capf company-files (company-dabbrev-code company-gtags
-;;    company-etags company-keywords) company-oddmuse
-;;    company-dabbrev)) (setq company-backends '( (company-semantic)
-;;    (company-gtags company-etags company-keywords company-yasnippet
-;;    :with) company-cmake company-capf company-dabbrev-code
-;;    company-files company-dabbrev )) (company-gtags company-capf
-;;    company-yasnippet company-clang company-semantic
-;;    company-c-headers company-files )
-
-;; (custom-set-faces
-;;      ;; '(company-preview
-;;      ;;   ((t (:foreground "darkgray" :underline t))))
-;;      ;; '(coympany-preview-common
-;;      ;;   ((t (:inherit company-preview))))
-;;      ;; '(company-tooltip
-;;      ;;   ((t (:background "lightgray" :foreground "black"))))
-;;      ;; '(company-tooltip-selection
-;;      ;;   ((t (:background "steelblue" :foreground "white"))))
-;;      '(company-tooltip-common
-;;        ((((type x)) (:inherit company-tooltip :weight bold))
-;;         (t (:inherit company-tooltip))))
-;;      '(company-tooltip-common-selection
-;;        ((((type x)) (:inherit company-tooltip-selection :weight bold))
-;;         (t (:inherit company-tooltip-selection)))))
 
 ;;; Custom used by emacs and elpa
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
