@@ -33,10 +33,11 @@ defining them in this alist."
     ("zenburn-bg"       . "#0f0f0f")
     ("zenburn-bg-08"    . "#151515")
         ("zenburn-bg-m"    . "#ff1515")
-    ("zenburn-bg+05"    . "#141419")
+    ("zenburn-bg+05"    . "#141425")
     ("zenburn-bg+1"     . "#202020")
     ("zenburn-bg+2"     . "#303030")
     ("zenburn-bg+3"     . "#404040")
+    ("zenburn-bg+4"     . "#505050")
     ("zenburn-red+2"    . "#ECB3B3")
     ("zenburn-red+1"    . "#DCA3A3")
     ("zenburn-red"      . "#CC9393")
@@ -1212,7 +1213,7 @@ Also bind `class' to ((class color) (min-colors 89))."
    `(sh-quoted-exec ((t (:foreground ,zenburn-red))))
 ;;;;; show-paren
    `(show-paren-mismatch ((t (:foreground ,zenburn-red+1 :background ,zenburn-bg+3 :weight bold))))
-   `(show-paren-match ((t (:background ,zenburn-bg+3 :weight bold))))
+   `(show-paren-match ((t (:background ,zenburn-bg+4 :weight bold))))
 ;;;;; smart-mode-line
    ;; use (setq sml/theme nil) to enable Zenburn for sml
    `(sml/global ((,class (:foreground ,zenburn-fg :weight bold))))
