@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name:3
+# key: 3
+# --
+
+/* * ${1:${`yas-selected-text`}} */

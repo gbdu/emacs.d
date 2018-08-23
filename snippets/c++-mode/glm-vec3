@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: v3
+# key: v3
+# --
+
+glm::vec3(${`yas-selected-text`})

@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: numbertable
+# key: numbertable
+# type: command
+# --
+(cl-loop
+for item in (number-sequence 1 9)
+do (insert (format "\t%S" item))
+)
+

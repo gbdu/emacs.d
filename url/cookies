@@ -1,0 +1,35 @@
+;; Emacs-W3 HTTP cookies file
+;; Automatically generated file!!! DO NOT EDIT!!!
+
+(setq url-cookie-storage
+ '((".google.com"
+  [url-cookie "NID" "136=q0Dt-EhF6_EKtaTuwcKqBCBLHr0IxTltk7QrqIYXceprskVPTGtQf0czdPuY3sfndmPVRIryEGYG8c1yjvtcf0fy9WNE2MvA4VtGtUoRumFEkKvfkhylfwxZtpm7fmbO" "Tue, 05-Feb-2019 02:52:06 GMT" "/" ".google.com" nil]
+  [url-cookie "CGIC" "IgMqLyo" "Mon, 04-Feb-2019 17:46:40 GMT" "/search" ".google.com" nil]
+  [url-cookie "CGIC" "IgMqLyo" "Mon, 04-Feb-2019 17:46:40 GMT" "/complete/search" ".google.com" nil]
+  [url-cookie "1P_JAR" "2018-08-22-18" "Fri, 21-Sep-2018 18:51:49 GMT" "/" ".google.com" nil])
+ (".stackexchange.com"
+  [url-cookie "prov" "d56f7553-af75-9fa5-e6af-66b2f2484674" "Fri, 01-Jan-2055 00:00:00 GMT" "/" ".stackexchange.com" nil])
+ (".github.com"
+  [url-cookie "_octo" "GH1.1.509982948.1534429041" "Sun, 16 Aug 2020 14:17:21 -0000" "/" ".github.com" nil])
+ (".stackoverflow.com"
+  [url-cookie "prov" "deeeee3f-921f-0e21-b1d4-1a6adccbcc16" "Fri, 01-Jan-2055 00:00:00 GMT" "/" ".stackoverflow.com" nil])
+ (".amazon.com"
+  [url-cookie "session-id" "141-7596451-1588528" "Tue, 01-Jan-2036 08:00:01 GMT" "/" ".amazon.com" nil]
+  [url-cookie "session-id-time" "2082787201l" "Tue, 01-Jan-2036 08:00:01 GMT" "/" ".amazon.com" nil]))
+)
+(setq url-cookie-secure-storage
+ '(("www.opengl.org"
+  [url-cookie "bb_lastactivity" "0" "Tue Aug 13 09:21:33 2019 GMT" "/" "www.opengl.org" t]
+  [url-cookie "bb_lastvisit" "1533525456" "Tue Aug 13 09:21:33 2019 GMT" "/" "www.opengl.org" t])
+ (".github.com"
+  [url-cookie "logged_in" "no" "Mon, 16 Aug 2038 14:17:21 -0000" "/" ".github.com" t])
+ (".wikipedia.org"
+  [url-cookie "WMF-Last-Access-Global" "20-Aug-2018" "Fri, 21 Sep 2018 00:00:00 GMT" "/" ".wikipedia.org" t])
+ ("en.wikipedia.org"
+  [url-cookie "WMF-Last-Access" "20-Aug-2018" "Fri, 21 Sep 2018 00:00:00 GMT" "/" "en.wikipedia.org" t]))
+)
+
+;; Local Variables:
+;; version-control: never
+;; no-byte-compile: t
+;; End:
