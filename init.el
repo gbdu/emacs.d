@@ -1,4 +1,5 @@
 ;;; Package
+
 ;;;; melpa
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
@@ -42,7 +43,10 @@
 	      (lambda (frame) (select-frame frame) (load-theme 'zenburn t)))
   (load-theme 'zenburn t))
 ;;;;; Paren mode
-(show-paren-mode 2) (setq blink-matching-paren t) (setq blink-matching-delay 1) (setq show-paren-style 'expression) ; highlight entire expression
+(show-paren-mode)
+(setq blink-matching-paren t)
+(setq blink-matching-delay 1)
+(setq show-paren-style 'expression) ; highlight entire expression
 
 (blink-cursor-mode)
 
@@ -375,9 +379,10 @@ helm-gtags-suggested-key-mapping t
 
 ;;;; compilation
 (require 'compile)
-(require 'cl) ; If you don't have it already
 
 (add-hook 'c-mode-hook (lambda () (set (make-local-variable 'compile-command) (format "make -k -f %s" (get-closest-pathname)))))
+(add-hook 'c++-mode-hook (lambda () (set (make-local-variable 'compile-command) (format "make -k -f %s" (get-closest-pathname)))))
+
 (add-to-list 'compilation-finish-functions 'notify-compilation-result)
 (global-set-key (kbd "<f5>")
 		(lambda ()
@@ -432,7 +437,7 @@ helm-gtags-suggested-key-mapping t
 (require 'dash)
 (require 'outshine)
 
-(setq outshine-org-style-global-cycling-at-bob-p t)
+;; (setq outshine-org-style-global-cycling-at-bob-p t)
 (setq outshine-startup-folded-p t)
 (setq outshine-use-speed-commands t)
 
@@ -671,7 +676,7 @@ helm-gtags-suggested-key-mapping t
  | _4_ transpose  | _fg_  gtags (_<tab>_ resumes)   | _di_ helm info    | _t_reeview      | 
  | _5_ window     | _fo_  find string occurance  ^^ +-( FIND WEB  )---^^+ _b_ookmarks     |
  | _r_ect         | _fm_  cquery member hierarchy^^ | _SPC_ surfraw     | _c_apture       |
- | _O_rg          | _ff_  find-files             ^^ | sear_x_           |             ^^  |
+ | _O_rg          | _ff_  find-files             ^^ | sear_x_           | _h_ide drawyers | 
  | _A_genda       |                             ^^^^| _g_oogle          | _<f1>_ M-x      |
  |             ^^ | ^^                           ^^ | _w_ikipedia       |             ^^  |
  | _<f3>_ macro   | _RET_ srefactor at point     ^^ | _W_ebjump         | _R_eload init   |
@@ -726,6 +731,7 @@ helm-gtags-suggested-key-mapping t
   ("k" helm-show-kill-ring )
   ("t" open-tree-view)
   ("c" org-capture)
+  ("h" (lambda ()  (interactive )(org-cycle-hide-drawers 'all)) )
   ("<f1>" helm-M-x)  
 
   ;; ("ws" bookmark-save)
