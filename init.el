@@ -24,7 +24,6 @@
 
 (require 'helper-hydras)
 
-(eval-after-load "dired" '(progn (define-key dired-mode-map "." 'hydra-dired/body)))
 
 ;;; Defaults, visual, and style
 ;;;; Visual
@@ -104,6 +103,8 @@
 ;;;;; Avy/ace
 (setq avy-keys '( ?1 ?2 ?3 ?4 ?5 ?q ?w ?e ?r ?t ?a ?s ?d ?f ?x ?c))
 (setq avy-all-windows nil)
+;;;; Apropos searches more thoroughly
+(setq apropos-do-all t)
 ;;; Org mode
 
 (setq org-cycle-separator-lines 0)
@@ -233,10 +234,10 @@ helm-gtags-suggested-key-mapping t
  "~/org/journal" 'nobackup-directory)
 
 
-(use-package undo-tree :config
-  (setq undo-tree-auto-save-history t)
-  (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
-  (global-undo-tree-mode))
+;; (use-package undo-tree :config
+;;   (setq undo-tree-auto-save-history t)
+;;   (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
+;;   (global-undo-tree-mode))
 
 ;;;; savehist
 ;; remember place in buffer
@@ -378,12 +379,13 @@ helm-gtags-suggested-key-mapping t
 (add-hook 'c-mode-hook (lambda () (set (make-local-variable 'compile-command) (format "make -k -f %s" (get-closest-pathname)))))
 (add-hook 'c++-mode-hook (lambda () (set (make-local-variable 'compile-command) (format "make -k -f %s" (get-closest-pathname)))))
 
-(add-to-list 'compilation-finish-functions 'notify-compilation-result)
-(global-set-key (kbd "<f5>")
-		(lambda ()
-		  (interactive)
-                  (setq-local compilation-read-command nil)
-                  (call-interactively 'compile)))
+;; (add-to-list 'compilation-finish-functions 'notify-compilation-result)
+;; (global-set-key (kbd "<f5>")
+;; 		(lambda ()
+;; 		  (interactive)
+;;                   (setq-local compilation-read-command nil)
+;;                   (call-interactively 'compile)))
+
 
 
 ;;;; stickyfunc
@@ -478,30 +480,35 @@ helm-gtags-suggested-key-mapping t
 (global-set-key (kbd "<C-f12>") 'fasd-find-file)
 (global-set-key (kbd "C-j") 'join-line)
 (global-set-key (kbd "C-*") 'destroy-win)
-(global-set-key (kbd "<C-escape>") 'server-edit)
+
+(global-set-key (kbd "<C-escape>") 'delete-frame)
+
 (global-set-key (kbd "<C-f9>") 'ace-jump-mode)
+(global-set-key (kbd "<M-f9>") 'avy-goto-word-0)
+(global-set-key (kbd "<M-f8>") 'avy-goto-char)
+
+(global-set-key (kbd "C-c l") 'org-store-link)
 
 (global-set-key [(control shift up)]  'move-line-up)
 (global-set-key [(control shift down)]  'move-line-down)
-
 
 
 ;;;; F1 hydra
 ;;;;; F1-Main 
 (defhydra hydra-f1 (:color blue :timeout 12 :hint none)
   "
- +-( HYDRAS )---+-( SYMBOL )---------------^^^^^^---+-( FIND INFO )---^^+-( MISC )-------^^+
- | _1_ shortcuts  | _fd_  find-function (lisp)   ^^ | _df_ describe-fun | _a_ce window     |
- | _2_ fonts      | _fx_  xref definition        ^^ | _dv_ describe-var | _<f9>_ swap      |
- | _3_ yassnippet | _fr_  xref references        ^^ | _da_ apropos info | _k_ill-ring      |
- | _4_ transpose  | _fg_  gtags (_<tab>_ resumes)   | _di_ helm info    | _t_reeview       | 
- | _5_ window     | _fo_  find string occurance  ^^ +-( FIND WEB  )---^^+ _b_ookmarks      |
- | _r_ect         | _fm_  cquery member hierarchy^^ | _SPC_ surfraw     | _c_apture        |
- | _O_rg          | _ff_  find-files             ^^ | sear_x_           | _h_elp window    | 
- | _A_genda       |                             ^^^^| _g_oogle          | _j_ournal entry  |
- |             ^^ | ^^                           ^^ | _w_ikipedia       | _S_earch journal |
- | _<f3>_ macro   | _RET_ srefactor at point     ^^ | _W_ebjump         | _R_eload init    |
- +-^^-------------+-^^^^----------------------------+-^^----------------+------------^^----+
+ +-( HYDRAS )-----+-( SYMBOL )---------------^^^^^^-+-( FIND INFO )--------^^+-( MISC )-------^^+
+ | _1_ shortcuts  | _fd_  find-function (lisp)   ^^ | _dd_ apropos docs      | _a_ce window     |
+ | _2_ fonts      | _fx_  xref definition        ^^ | _da_ apropos symbol    | _<f9>_ swap      |
+ | _3_ yassnippet | _fr_  xref references        ^^ | _dt_ toggle help       | _k_ill-ring      |
+ | _4_ transpose  | _fg_  gtags (_<tab>_ resumes)   | _di_ info indices      | _t_reeview       | 
+ | _5_ window     | _fo_  find string occurance  ^^ +-( FIND WEB  )--------^^+ _b_ookmarks      |
+ | _r_ect         | _fm_  cquery member hierarchy^^ | _SPC_ surfraw          | _c_apture        |
+ | _O_rg          | _ff_  find-files             ^^ | sear_x_                |              ^^  | 
+ | _A_genda       |                             ^^^^| _g_oogle               | _j_ournal entry  |
+ |             ^^ | ^^                           ^^ | _w_ikipedia            | _S_earch journal |
+ | _<f3>_ macro   | _RET_ srefactor at point     ^^ | _W_ebjump              | _R_eload init    |
+ +-^^-------------+-^^^^----------------------------+-^^---------------------+------------^^----+
 "
 ;;;;;; hydras
 ("1" helper-hydra-shortcuts/body )
@@ -525,9 +532,9 @@ helm-gtags-suggested-key-mapping t
 ("ff" helm-find-files)
 ("RET" srefactor-refactor-at-point)
 ;;;;;; find info
-("df" describe-function)
-("dv" describe-variable)
-("da" helm-apropos)
+("dd" apropos-documentation)
+("da" apropos)
+("dt" toggle-context-help)
 ("di" helm-info)
 ;;;;;; web find
 ("SPC" helm-surfraw)
@@ -645,39 +652,29 @@ _g_: general
 (progn
    ;; define a prefix keymap
    (define-prefix-command 'rshiftmap)
-
    (define-key rshiftmap [f9] 'er/expand-region)
    (define-key rshiftmap [? ] 'srefactor-refactor-at-point)
-
    (define-key rshiftmap [?\t] 'org-global-cycle)
    (define-key rshiftmap [?\r] 'helm-do-grep-ag)
    (define-key rshiftmap [?\d] 'kill-whitespace)
-
    (define-key rshiftmap (kbd "/") 'hs-toggle-hiding)
-
    (define-key rshiftmap (kbd "<up>") (lambda() (interactive) (windmove-emacs-or-tmux "up" "tmux select-pane -U")))
    (define-key rshiftmap (kbd "<down>") (lambda() (interactive) (windmove-emacs-or-tmux "down" "tmux select-pane -D")))
    (define-key rshiftmap (kbd "<right>") (lambda() (interactive) (windmove-emacs-or-tmux "right" "tmux select-pane -R")))
    (define-key rshiftmap (kbd "<left>") (lambda() (interactive) (windmove-emacs-or-tmux "left" "tmux select-pane -L")))
-
    (define-key rshiftmap (kbd "q") 'magit-diff-popup)
    (define-key rshiftmap (kbd "s") 'magit-status)
    (define-key rshiftmap (kbd "a") 'magit-dispatch-popup)
    (define-key rshiftmap (kbd "x") 'magit-commit)
-   (define-key rshiftmap (kbd "h") 'toggle-context-help)
-
+   (define-key rshiftmap (kbd "t") 'toggle-context-help)
    (define-key rshiftmap (kbd "f") 'helm-find-files)
-
    (define-key rshiftmap (kbd "`") 'rotate-window)
    (define-key rshiftmap (kbd "k") 'kill-buffer)
-
    (define-key rshiftmap (kbd "1") 'rotate:even-horizontal)
    (define-key rshiftmap (kbd "2") 'rotate:even-vertical)
    (define-key rshiftmap (kbd "3") 'rotate:main-horizontal)
    (define-key rshiftmap (kbd "4") 'rotate:main-vertical)
    (define-key rshiftmap (kbd "5") 'rotate:tiled)
-
-
 
  ;;  (define-key rshiftmap (kbd "\\") 'ripgrep-regexp)
    (define-key rshiftmap (kbd "\\") 'ff-find-other-file)
@@ -695,20 +692,23 @@ _g_: general
 (global-set-key [kp-delete] 'yas/insert-snippet)
 (global-set-key [C-kp-delete] 'yas-new-snippet)
 
+
 ;;;;;; 0 for imenu
-(add-hook 'outline-minor-mode-hook (lambda () (interactive) (local-set-key [kp-0] 'helm-navi-headings)))
-(add-hook 'org-mode-hook (lambda () (interactive) (local-set-key
-						   [kp-0]
-						   'helm-org-rifle)))
+(add-hook 'outline-minor-mode-hook (lambda () (interactive)
+				     (local-set-key [kp-0]
+						    'helm-navi-headings)))
+
+(add-hook 'org-mode-hook (lambda () (interactive) (progn (local-set-key [kp-0] 'helm-org-rifle)
+							 (local-set-key [M-up] 'outline-previous-heading)
+							 (local-set-key [M-down] 'outline-next-heading)
+							 (local-set-key (kbd "<S-up>") 'outline-up-heading)
+							 (local-set-key (kbd "<S-down>") 'outline-forward-same-level))))
+
 
 
 ;; (global-set-key [kp-0] 'helm-navi-headings)
 (global-set-key [C-kp-0] 'helm-semantic-or-imenu)
-
 (global-set-key [kp-insert] 'helm-navi-headings)
-
-
-
 (global-set-key [C-kp-insert] 'helm-semantic-or-imenu)
 
 ;;;;;; 4-6 axis: mark ring
@@ -820,7 +820,7 @@ _g_: general
  '(org-log-into-drawer t)
  '(package-selected-packages
    (quote
-    (powerline org-journal paredit clojure-mode react-snippets lsp-go lsp-python srefactor-lisp helm-navi navi-mode use-package ace-jump-mode scpaste company-box lsp-ui company-lsp lsp-clangd cquery helm-ag-r helm-firefox eyebrowse xpm stickyfunc-enhance company-rtags helm-org-rifle helm-google company-web yasnippet-classic-snippets company-lua company-quickhelp helm-ag outshine neotree fold-dwim-org htmlize org-elisp-help elpa-mirror ecb workgroups2 helm-xref pelican-mode ox-rst goto-last-change helm-company imenu-anywhere company-shell c-eldoc flycheck-irony company-irony-c-headers company-irony irony srefactor glsl-mode lua-mode undo-tree yasnippet-snippets rotate cmake-mode auctex headlong ace-window org-bullets autopair babel hydra which-key ox-reveal auto-yasnippet org-brain pc-bufsw buffer-stack helm-w3m sublime-themes go-mode gnugo go doremi-frm evil-magit vdiff-magit magit helm-dired-recent-dirs helm-dired-history ripgrep company-c-headers company projectile-speedbar sr-speedbar function-args helm-gtags projector projectile helm-projectile ag dumb-jump expand-region virtualenv flymake-lua xclip elpy fzf fasd bookmark+ helm-bm pdf-tools helm switch-window dracula-theme)))
+    (powerline org-journal paredit clojure-mode react-snippets lsp-go lsp-python srefactor-lisp helm-navi navi-mode use-package ace-jump-mode scpaste company-box lsp-ui company-lsp lsp-clangd cquery helm-firefox eyebrowse xpm stickyfunc-enhance company-rtags helm-org-rifle helm-google company-web yasnippet-classic-snippets company-lua company-quickhelp helm-ag outshine neotree fold-dwim-org htmlize org-elisp-help elpa-mirror ecb workgroups2 helm-xref pelican-mode ox-rst goto-last-change helm-company imenu-anywhere company-shell c-eldoc flycheck-irony company-irony-c-headers company-irony irony srefactor glsl-mode lua-mode undo-tree yasnippet-snippets rotate cmake-mode auctex headlong ace-window org-bullets autopair babel hydra which-key ox-reveal auto-yasnippet org-brain pc-bufsw buffer-stack helm-w3m sublime-themes go-mode gnugo go doremi-frm evil-magit vdiff-magit magit helm-dired-recent-dirs helm-dired-history ripgrep company-c-headers company projectile-speedbar sr-speedbar function-args helm-gtags projector projectile helm-projectile ag dumb-jump expand-region virtualenv flymake-lua xclip elpy fzf fasd bookmark+ helm-bm pdf-tools helm switch-window dracula-theme)))
  '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
  '(safe-local-variable-values
    (quote
