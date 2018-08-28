@@ -1,4 +1,3 @@
-;; *  code 
 ;; * Reload settings
 (defun helper-reload-settings () (interactive) (eval '(load-file "~/.emacs.d/init.el"))) ;; Reload init.el
 ;; * Org
@@ -103,6 +102,16 @@ family all work -- e.g., show-all; org-show-subtree; etc."
                 (if (re-search-forward "^[ \t]*:END:" limit t)
                     (outline-flag-region start (point-at-eol) t)
                   (user-error msg))))))))))
+
+;; ** org-journal-find-location 
+(defun org-journal-find-location ()
+  ;; Open today's journal, but specify a non-nil prefix argument in order to
+  ;; inhibit inserting the heading; org-capture will insert the heading.
+  (org-journal-new-entry t)
+  ;; Position point on the journal's top-level heading so that org-capture
+  ;; will add the new entry as a child entry.
+  (goto-char (point-min)))
+
 
 ;; * File handling
 ;; ** get sub dirs 
@@ -231,13 +240,18 @@ of FILE in the current directory, suitable for creation"
 	  (re-search-forward "[ \t\r\n]+" nil t)
 	  (replace-match "" nil nil))))))
 
-;; ** align text with equal signs 
+;; ** align text
 (defun align-to-equals (begin end)
   "Align region to equal signs"
    (interactive "r")
-   (align-regexp begin end "\\(\\s-*\\)=" 1 1 ))
+   (align-regexp
+    begin end "\\(\\s-*\\)=" 1 1 ))
 
-
+(defun align-using-char (begin end spacer)
+  "Align region using the char given as spacer"
+  (interactive "r\nsSpacer to use: ")
+  (align-regexp begin end (concat "\\(\\s-*\\)" spacer) 1 1 ))
+  
 ;; ** move lines
 (defun move-line-up ()
   "Move up the current line."
@@ -253,6 +267,48 @@ of FILE in the current directory, suitable for creation"
   (transpose-lines 1)
   (forward-line -1)
   (indent-according-to-mode))
+
+
+
+;; * context help
+;; help-window that will automatically update to
+;; display the help of the symbol before point.
+(defun toggle-context-help ()
+  "Turn on or off the context help.
+Note that if ON and you hide the help buffer then you need to
+manually reshow it. A double toggle will make it reappear"
+  (interactive)
+  (with-current-buffer (help-buffer)
+    (unless (local-variable-p 'context-help)
+      (set (make-local-variable 'context-help) t))
+    (if (setq context-help (not context-help))
+        (progn
+           (if (not (get-buffer-window (help-buffer)))
+               (display-buffer (help-buffer)))))
+    (message "Context help %s" (if context-help "ON" "OFF"))))
+
+(defun context-help ()
+  "Display function or variable at point in *Help* buffer if visible.
+Default behaviour can be turned off by setting the buffer local
+context-help to false"
+  (interactive)
+  (let ((rgr-symbol (symbol-at-point))) ; symbol-at-point http://www.emacswiki.org/cgi-bin/wiki/thingatpt%2B.el
+    (with-current-buffer (help-buffer)
+     (unless (local-variable-p 'context-help)
+       (set (make-local-variable 'context-help) t))
+     (if (and context-help (get-buffer-window (help-buffer))
+         rgr-symbol)
+       (if (fboundp  rgr-symbol)
+           (describe-function rgr-symbol)
+         (if (boundp  rgr-symbol) (describe-variable rgr-symbol)))))))
+
+(defadvice eldoc-print-current-symbol-info
+  (around eldoc-show-c-tag activate)
+  (cond
+        ((eq major-mode 'emacs-lisp-mode) (context-help) ad-do-it)
+        ((eq major-mode 'lisp-interaction-mode) (context-help) ad-do-it)
+        ((eq major-mode 'apropos-mode) (context-help) ad-do-it)
+        (t ad-do-it)))
 
 
 
@@ -395,9 +451,30 @@ and set the focus back to Emacs frame"
 
 ;; * provide 
 
+;; ** show next entry keeping other entries closed
+(defun org-show-current-heading-tidily ()
+  "Show next entry, keeping other entries closed."
+  (if (save-excursion (end-of-line) (outline-invisible-p))
+      (progn (org-show-entry) (show-children))
+    (outline-back-to-heading)
+    (unless (and (bolp) (org-on-heading-p))
+      (org-up-heading-safe)
+      (hide-subtree)
+      (error "Boundary reached"))
+    (org-overview)
+    (org-reveal t)
+    (org-show-entry)
+    (show-children)))
 
 
 (provide 'helpers1)
+
+
+
+
+
+
+
 
 
 

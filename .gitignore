@@ -14,3 +14,11 @@ emacs-powerline/
 settings.el
 /.emacs.desktop
 persp-confs/
+/.org-id-locations
+url/*
+/.emacs.desktop.lock
+emacs-desktop
+eshell/
+request/
+newsticker/
+tramp
