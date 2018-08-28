@@ -246,7 +246,7 @@ T - tag prefix
                                         :post (deactivate-mark))
   "
   ^_k_^     _d_elete            _s_tring
-_h_   _l_   _o_k                _y_ank
+_h_   _l_   _q_uit              _y_ank
   ^_j_^     _n_ew-copy          _r_eset
 ^^^^        _e_xchange          _u_ndo
 ^^^^        _o_pen              _p_aste
@@ -271,7 +271,7 @@ _h_   _l_   _o_k                _y_ank
   ("u" undo nil)
   ("s" string-rectangle nil)
   ("p" kill-rectangle nil)
-("o" nil nil))
+("q" nil nil))
 ;;; Window
 (defhydra helper-hydra-window (:color red
                         :hint nil)
