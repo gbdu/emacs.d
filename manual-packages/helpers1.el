@@ -1,5 +1,28 @@
 ;; * Reload settings
 (defun helper-reload-settings () (interactive) (eval '(load-file "~/.emacs.d/init.el"))) ;; Reload init.el
+;; * Completion
+(defun company-yasnippet-or-completion ()
+  "Solve company yasnippet conflicts."
+  (interactive)
+  (let ((yas-fallback-behavior
+         (apply 'company-complete-common nil)))
+    (yas-expand)))
+
+(defun et/semantic-remove-hooks ()
+  "Fix for some semantic completion problems"
+  (interactive)
+    (remove-hook 'completion-at-point-functions
+                 'semantic-analyze-completion-at-point-function)
+    (remove-hook 'completion-at-point-functions
+                 'semantic-analyze-notc-completion-at-point-function)
+    (remove-hook 'completion-at-point-functions
+                 'semantic-analyze-nolongprefix-completion-at-point-function))
+
+(defun cquery//enable ()
+  (condition-case nil
+      (lsp-cquery-enable)
+    (user-error nil)))
+
 ;; * Org
 ;; ** adjust region
 (defun org-adjust-region (b e)
@@ -36,9 +59,7 @@
     (forward-line))
       (when last-item-pos
     (goto-char last-item-pos)
-    (org-list-repair)
-    ))))
-
+    (org-list-repair)))))
 
 ;; ** add ids to headlines
 (defun my/org-add-ids-to-headlines-in-file ()
@@ -48,17 +69,14 @@
 
 ;; ** kill ID
 (defun my/copy-id-to-clipboard()
-  "Copy the ID property value to killring,
-if no ID is there then create a new unique ID.
-This function works only in org-mode buffers.
-
-"
+  "Copy the ID property value to killring, if no ID is there then
+   create a new unique ID. This function works only in org-mode buffers."
+  
   (interactive)
   (when (eq major-mode 'org-mode) ; do this only in org-mode buffers
     (setq mytmpid (funcall 'org-id-get-create))
     (kill-new mytmpid)
-    (message "Copied %s to killring (clipboard)" mytmpid)
-    ))
+    (message "Copied %s to killring (clipboard)" mytmpid)))
 
 ;; ** Hide drawers
 
@@ -113,9 +131,24 @@ family all work -- e.g., show-all; org-show-subtree; etc."
   (goto-char (point-min)))
 
 
+;; ** TODO Show next entry keeping other entries closed
+(defun org-show-current-heading-tidily ()
+  "Show next entry, keeping other entries closed."
+  (if (save-excursion (end-of-line) (outline-invisible-p))
+      (progn (org-show-entry) (show-children))
+    (outline-back-to-heading)
+    (unless (and (bolp) (org-on-heading-p))
+      (org-up-heading-safe)
+      (hide-subtree)
+      (error "Boundary reached"))
+    (org-overview)
+    (org-reveal t)
+    (org-show-entry)
+    (show-children)))
+
 ;; * File handling
-;; ** get sub dirs 
-(defun get-all-subdirectories(dir-list)
+;; ** find sub dirs 
+(defun find-all-subdirectories(dir-list)
   "Returns a list of all recursive subdirectories of dir-list, 
    ignoring directories with names that start with . (dot)"
   (split-string 
@@ -156,48 +189,50 @@ Version 2016-10-15"
          (lambda ($fpath) (let ((process-connection-type nil))
                             (start-process "" nil "xdg-open" $fpath))) $file-list))))))
 
-;; ** Show in file manager 
+;; ** TODO Show in file manager 
 
-(defun xah-show-in-desktop ()
-  "Show current file in desktop.
- (Mac Finder, Windows Explorer, Linux file manager)
- This command can be called when in a file or in `dired'.
+;; (defun xah-show-in-desktop ()
+;;   "Show current file in desktop.
+;;  (Mac Finder, Windows Explorer, Linux file manager)
+;;  This command can be called when in a file or in `dired'.
 
-URL `http://ergoemacs.org/emacs/emacs_dired_open_file_in_ext_apps.html'
-Version 2018-01-13"
-  (interactive)
-  (let (($path (if (buffer-file-name) (buffer-file-name) default-directory )))
-    (cond
-     ((string-equal system-type "windows-nt")
-      (w32-shell-execute "explore" (replace-regexp-in-string "/" "\\" $path t t)))
-     ((string-equal system-type "darwin")
-      (if (eq major-mode 'dired-mode)
-          (let (($files (dired-get-marked-files )))
-            (if (eq (length $files) 0)
-                (shell-command
-                 (concat "open " (shell-quote-argument default-directory)))
-              (shell-command
-               (concat "open -R " (shell-quote-argument (car (dired-get-marked-files )))))))
-        (shell-command
-         (concat "open -R " $path))))
-     ((string-equal system-type "gnu/linux")
-      (let (
-            (process-connection-type nil)
-            (openFileProgram (if (file-exists-p "/usr/bin/gvfs-open")
-                                 "/usr/bin/gvfs-open"
-                               "/usr/bin/xdg-open")))
-        (start-process "" nil openFileProgram $path))
-      ;; (shell-command "xdg-open .") ;; 2013-02-10 this sometimes froze emacs till the folder is closed. eg with nautilus
-      ))))
-
-
+;; URL `http://ergoemacs.org/emacs/emacs_dired_open_file_in_ext_apps.html'
+;; Version 2018-01-13"
+;;   (interactive)
+;;   (let (($path (if (buffer-file-name) (buffer-file-name) default-directory )))
+;;     (cond
+;;      ((string-equal system-type "windows-nt")
+;;       (w32-shell-execute "explore" (replace-regexp-in-string "/" "\\" $path t t)))
+;;      ((string-equal system-type "darwin")
+;;       (if (eq major-mode 'dired-mode)
+;;           (let (($files (dired-get-marked-files )))
+;;             (if (eq (length $files) 0)
+;;                 (shell-command
+;;                  (concat "open " (shell-quote-argument default-directory)))
+;;               (shell-command
+;;                (concat "open -R " (shell-quote-argument (car (dired-get-marked-files )))))))
+;;         (shell-command
+;;          (concat "open -R " $path))))
+;;      ((string-equal system-type "gnu/linux")
+;;       (let ((process-connection-type nil)
+;;             ;; (openFileProgram (if (file-exists-p "/usr/bin/gvfs-open")
+;;             ;;                      "/usr/bin/gvfs-open"
+;;             ;;                    "/usr/bin/xdg-open")))
+;; 	    (openFileProgram "pcmanfm"))
+	    
+;;         (start-process "" nil "pcmanfm" $path))
+;;       ;; (shell-command "xdg-open .") ;; 2013-02-10 this sometimes froze emacs till the folder is closed. eg with nautilus
+;;       ))))
 
 ;; ** get closest path name
+
 (require 'cl) ; If you don't have it already
+
 (defun* get-closest-pathname (&optional (file "Makefile"))
-  "Determine the pathname of the first instance of FILE starting from the current directory towards root.
-This may not do the correct thing in presence of links. If it does not find FILE, then it shall return the name
-of FILE in the current directory, suitable for creation"
+  "Determine the pathname of the first instance of FILE starting from
+the current directory towards root.  This may not do the correct thing
+in presence of links. If it does not find FILE, then it shall return
+the name of FILE in the current directory, suitable for creation"
   (let ((root (expand-file-name "/"))) ; the win32 builds should translate this correctly
     (expand-file-name file
 		      (loop 
@@ -217,17 +252,13 @@ of FILE in the current directory, suitable for creation"
   (let ((oldpos (point)))
     (end-of-line)
     (newline-and-indent)))
-
-
 ;; ** Delete leading whitespace
 (defun my-delete-leading-whitespace (start end)
-	  "Delete whitespace at the beginning of each line in region."
-	  (interactive "*r")
-	  (save-excursion
-	    (if (not (bolp)) (forward-line 1))
-	    (delete-whitespace-rectangle (point) end nil)))
-
-
+  "Delete whitespace at the beginning of each line in region."
+  (interactive "*r")
+  (save-excursion
+    (if (not (bolp)) (forward-line 1))
+    (delete-whitespace-rectangle (point) end nil)))
 ;; ** Kill whitespace
 (defun kill-whitespace ()
   "Kill the whitespace between two non-whitespace characters"
@@ -267,8 +298,44 @@ of FILE in the current directory, suitable for creation"
   (transpose-lines 1)
   (forward-line -1)
   (indent-according-to-mode))
+;; * Navigation
+;; ** Hyper navigation (semantic-outline)
+(defun hyper-left ()
+  (interactive)
+  (condition-case nil
+    (progn
+      (senator-previous-tag)
+;;      (outline-hide-other)
+      (outline-show-entry))
+    (error (progn
+	     (outline-previous-heading)
+	     (outline-show-entry)))))
 
+(defun hyper-right ()
+  (interactive)
+  (senator-fold-tag-toggle))
 
+(defun hyper-up ()
+  "go up semantically or in outline"
+  (interactive)
+  (condition-case nil
+      (senator-go-to-up-reference)
+    (error (progn
+	     (outline-up-heading 1)
+	     (outline-show-entry)))))
+
+(defun hyper-down ()
+  "go down semantically or in outline"
+  (interactive)
+  (condition-case nil
+      (progn
+	(senator-next-tag)
+;;	(outline-hide-other)
+	(outline-show-entry))
+    (error (progn
+;;	     (outline-up-heading 1)
+	     (outline-next-heading)
+	     (outline-show-entry)))))
 
 ;; * context help
 ;; help-window that will automatically update to
@@ -330,8 +397,6 @@ context-help to false"
 (defun switch-to-previous-buffer ()
   "Repeated invocations toggle between the two most recently open buffers."
   (interactive) (switch-to-buffer (other-buffer (current-buffer) )))
-
-
 
 ;; * open-tree-view
 (defun open-tree-view ()
@@ -400,8 +465,6 @@ buffer."
 ;; * insert date
 (defun insert-current-date () (interactive)
        (insert (shell-command-to-string "date")))
-
-
 ;; * Move by window direction even inside tmux 
 (defun windmove-emacs-or-tmux(dir tmux-cmd)
   (interactive)
@@ -425,13 +488,12 @@ and set the focus back to Emacs frame"
   )
 
 ;; * Hideshow
-  (defun display-code-line-counts (ov)
+
+(defun display-code-line-counts (ov)
   (when (eq 'code (overlay-get ov 'hs))
-  (overlay-put ov 'help-echo
-  (buffer-substring (overlay-start ov)
-  (overlay-end ov)))))
-
-
+    (overlay-put ov 'help-echo
+		 (buffer-substring (overlay-start ov)
+				   (overlay-end ov)))))
 
 (defun toggle-selective-display (column)
   (interactive "P")
@@ -450,23 +512,6 @@ and set the focus back to Emacs frame"
     (toggle-selective-display column)))
 
 ;; * provide 
-
-;; ** show next entry keeping other entries closed
-(defun org-show-current-heading-tidily ()
-  "Show next entry, keeping other entries closed."
-  (if (save-excursion (end-of-line) (outline-invisible-p))
-      (progn (org-show-entry) (show-children))
-    (outline-back-to-heading)
-    (unless (and (bolp) (org-on-heading-p))
-      (org-up-heading-safe)
-      (hide-subtree)
-      (error "Boundary reached"))
-    (org-overview)
-    (org-reveal t)
-    (org-show-entry)
-    (show-children)))
-
-
 (provide 'helpers1)
 
 
