@@ -31,6 +31,13 @@ _
 
 
 
+;;; org utils 
+(defhydra helper-hydra-org-utils (:color blue)
+  ("1" my/copy-id-to-clipboard "Copy headline ID")
+  ("c" org-capture "Capture note")
+  ("I" my/org-add-ids-to-headlines-in-file "ID all headlines")
+  ("T" org-agenda-show-tags-in-columns  "Agenda tags")
+  ("j" org-adjust-region "Adjust list in region"))
 ;;; Org/agenda
 (defhydra helper-hydra-org-agenda (:pre (setq which-key-inhibit t)
                                  :post (setq which-key-inhibit nil)

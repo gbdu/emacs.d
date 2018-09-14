@@ -1,5 +1,16 @@
 ;; * Reload settings
-(defun helper-reload-settings () (interactive) (eval '(load-file "~/.emacs.d/init.el"))) ;; Reload init.el
+(defun helper-reload-settings ()
+  "Reload/re-eval ~/.emacs.d/init.el" (interactive)
+  (eval '(load-file "~/.emacs.d/init.el")))
+
+;; * eval-sexp-or-region
+(defun eval-sexp-or-region ()
+  "Eval sexp or region depending on whether or not a region is active"
+  (interactive)
+  (cond
+   (mark-active (call-interactively 'eval-region))
+   (t (call-interactively 'eval-last-sexp))))
+
 ;; * Completion
 (defun company-yasnippet-or-completion ()
   "Solve company yasnippet conflicts."
@@ -246,12 +257,12 @@ the name of FILE in the current directory, suitable for creation"
 ;; ** Newline without break of line
 ;; newline-without-break-of-line
 (defun newline-without-break-of-line ()
-  "1. move to end of the line.
-  2. insert newline with index"
+  "move to end of the line, insert newline with indent"
   (interactive)
   (let ((oldpos (point)))
     (end-of-line)
     (newline-and-indent)))
+
 ;; ** Delete leading whitespace
 (defun my-delete-leading-whitespace (start end)
   "Delete whitespace at the beginning of each line in region."
@@ -259,10 +270,11 @@ the name of FILE in the current directory, suitable for creation"
   (save-excursion
     (if (not (bolp)) (forward-line 1))
     (delete-whitespace-rectangle (point) end nil)))
+
 ;; ** Kill whitespace
 (defun kill-whitespace ()
   "Kill the whitespace between two non-whitespace characters"
-  (interactive "*")
+  (interactive "*") ;; means error is signaled if readonly
   (save-excursion
     (save-restriction
       (save-match-data
@@ -298,8 +310,18 @@ the name of FILE in the current directory, suitable for creation"
   (transpose-lines 1)
   (forward-line -1)
   (indent-according-to-mode))
-;; * Navigation
+
+
+;; * Hyper Navigation
+
 ;; ** Hyper navigation (semantic-outline)
+
+(defun hyper-nav-up-or-previous ()
+  (interactive)
+  ;; (message (format "%s" (outline-up-heading -1))))
+  (outline-up-heading -1))
+
+
 (defun hyper-left ()
   (interactive)
   (condition-case nil
@@ -359,7 +381,8 @@ manually reshow it. A double toggle will make it reappear"
 Default behaviour can be turned off by setting the buffer local
 context-help to false"
   (interactive)
-  (let ((rgr-symbol (symbol-at-point))) ; symbol-at-point http://www.emacswiki.org/cgi-bin/wiki/thingatpt%2B.el
+  (let ((rgr-symbol (symbol-at-point))) ; symbol-at-point
+					; http://www.emacswiki.org/cgi-bin/wiki/thingatpt%2B.el
     (with-current-buffer (help-buffer)
      (unless (local-variable-p 'context-help)
        (set (make-local-variable 'context-help) t))

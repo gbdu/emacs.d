@@ -100,7 +100,7 @@
 ;;;; Windows and layout
 ;;;;; Winner and windmove 
 (winner-mode 1) ;; remember window layouts
-(setq windmove-wrap-around t)
+;; (setq windmove-wrap-around t) ;; warning: this breaks tmux windmove
 
 ;;;;; use only one desktop for saving layouts
 (setq desktop-path '("~/.emacs.d/"))
@@ -185,7 +185,7 @@
                   directory org-agenda-file-regexp))
                '("~/org/notes" ) ) ) )
 
-(mapc '(lambda (item) (add-to-list 'org-agenda-files item))
+(mapc #'(lambda (item) (add-to-list 'org-agenda-files item))
       org-agenda-files-notes)
 
 ;;;;; Options 
@@ -355,15 +355,10 @@
     (add-hook 'after-init-hook 'global-company-mode)
     (setq company-dabbrev-downcase 0)
     (setq company-idle-delay 0.1)
-    (setq company-minimum-prefix-length   1)
+    (setq company-minimum-prefix-length 1)
     (setq company-show-numbers t)
     (setq company-dabbrev-time-limit 0.5)
-    (setq company-transformers nil)
-
-    (define-key company-active-map (kbd "C-TAB")
-      'company-complete-common-or-cycle)
-    (define-key company-active-map (kbd "<C-tab>")
-      'company-complete-common-or-cycle)))
+    (setq company-transformers nil)))
 
 ;;;; lsp-mode
 (use-package lsp-mode
@@ -523,11 +518,16 @@
 ;; (setq outshine-startup-folded-p t)
 
 (setq outshine-use-speed-commands t)
+
 (add-hook 'outline-minor-mode-hook
 	  (lambda ()
+	    (local-set-key (kbd "C-c C-t") 'outshine-todo)
+	    (local-set-key [kp-end] 'outshine-clock-in)
+	    (local-set-key [kp-next] 'outshine-clock-out)
 	    (local-set-key [kp-0] 'helm-navi-headings)
 	    (local-set-key (kbd "<C-return>") 'outline-insert-heading)))
 
+;; 
 ;; (with-eval-after-load "outline"
 ;;   (progn (local-set-key "<C-return>" 'outline-insert-heading)
 ;; 	 (local-set-key [kp-0] 'helm-navi-headings)))
@@ -536,6 +536,7 @@
 (add-hook 'outline-minor-mode-hook 'outshine-hook-function)
 
 ;; Enables outline-minor-mode for *ALL* programming buffers
+(add-hook 'conf-mode-hook 'outline-minor-mode)
 (add-hook 'prog-mode-hook 'outline-minor-mode)
 
 ;;;; autopair mode
@@ -575,6 +576,7 @@
 (setq-default ff-other-file-alist 'my-cpp-other-file-alist)
 
 ;;; Keymaps
+;;;; org mode 
 (with-eval-after-load "org"
   (progn (define-key org-mode-map [kp-0] 'helm-org-rifle)
 	 (define-key org-mode-map [M-up] 'outline-previous-heading)
@@ -582,10 +584,27 @@
 	 (define-key org-mode-map [M-S-up] 'org-metaup)
 	 (define-key org-mode-map [M-S-down] 'org-metadown)
 	 (define-key org-mode-map [C-M-s-up] 'org-shiftmetaup)
-	 (define-key org-mode-map [C-M-s-down] 'org-shiftmetadown)))
+	 (define-key org-mode-map [C-M-s-down] 'org-shiftmetadown)
+	 (define-key org-mode-map [kp-end] 'org-clock-in)
+	 (define-key org-mode-map [kp-next] 'org-clock-out)
+	 ))
 
-;;;; Misc
+;;;; TODO misc
 ;; TODO bind forward-list and backward-list
+
+;; (define-key company-active-map (kbd "C-TAB")
+;;   'company-complete-common-or-cycle)
+
+
+;; (global-set-key (kbd "<H-right>") (lambda()
+;; 				    (interactive)
+;; 				    (ignore-errors (outline-up-heading -1))
+;; 				    (outshine-narrow-to-subtree)))
+
+;; (global-set-key (kbd "<H-left>") 'widen)
+;; (global-set-key (kbd "<H-up>") 'outline-up-heading)
+;; (global-set-key (kbd "<H-down>") 'outline-next-heading)
+
 
 (global-set-key (kbd "<S-up>") 'outline-up-heading)
 (global-set-key (kbd "<S-down>") 'outline-forward-same-level)
@@ -594,20 +613,24 @@
 (global-set-key (kbd "<f12>") 'helm-mini)
 (global-set-key (kbd "<C-f12>") 'fasd-find-file)
 (global-set-key (kbd "<M-f12>") 'helm-recentf)
+
 (global-set-key (kbd "C-j") 'join-line)
+
 (global-set-key (kbd "C-*") 'destroy-win)
+
 (global-set-key (kbd "<C-escape>") 'delete-frame)
 (global-set-key (kbd "<C-f9>") 'ace-jump-mode)
 (global-set-key (kbd "<M-f9>") 'avy-goto-word-0)
 (global-set-key (kbd "<M-f8>") 'avy-goto-char)
+
 (global-set-key (kbd "C-c l") 'org-store-link)
 
-;;;;
+(global-set-key (kbd "C-x C-e") 'eval-sexp-or-region)
+
 (global-set-key (kbd "<C-enter>") 'helm-org-rifle)
 
 (global-set-key [(control shift up)]  'move-line-up)
 (global-set-key [(control shift down)]  'move-line-down)
-
 
 ;;;; F1 hydra
 ;;;;; F1-Main 
@@ -678,9 +701,12 @@
 ;;;;;; hidden
 ("K" save-buffers-kill-emacs)
 
-("H" (lambda ()  (interactive )(org-cycle-hide-drawers 'all)))
+("H" (lambda ()  (interactive)
+       (org-cycle-hide-drawers 'all)))
+
 ("BC" (lambda () (interactive)
 	(setq-local company-backends (remove 'company-capf company-backends))))
+
 ("BS" (lambda () (interactive)
 	(setq-local company-backends (remove 'company-semantic company-backends)))))
 
@@ -689,7 +715,6 @@
 
 
 ;;;;; F1-settings/shortcuts
-
 (defhydra helper-hydra-shortcuts (:color blue :hint nil)
 "
               ^Settings^
@@ -701,26 +726,19 @@ _3_: helper-hydras.el
 _o_: openbox rc.xml             _i_nsert backends 
 _z_: ~/.zshrc
 _s_: ~/scripts
-_g_: general
+_g_: general.org
 
 "
-("1" ((lambda () (interactive) (find-file "~/.emacs.d/init.el"))))
-("2" ((lambda () (interactive) (find-file "~/.emacs.d/manual-packages/helpers1.el"))))
-("3" ((lambda () (interactive) (find-file "~/.emacs.d/manual-packages/helper-hydras.el"))))
-("o" ((lambda () (interactive) (find-file "~/.config/openbox/rc.xml"))))
-("z" ((lambda () (interactive) (find-file "~/.zshrc"))))
-("g" ((lambda () (interactive) (find-file "~/org/general.org"))))
-("s" ((lambda () (interactive) (helm-find-files "~/scripts/"))))
-("x" (lambda () (interactive) (shell-command "keyboard_config.sh")))
-("i" (insert (format "(setq company-backends '%s" company-backends)))
-("<f2>" helper-reload-settings))
-
-(defhydra helper-hydra-org-utils (:color blue)
-("1" my/copy-id-to-clipboard "Copy headline ID")
-("c" org-capture "Capture note")
-("I" my/org-add-ids-to-headlines-in-file "ID all headlines")
-("T" org-agenda-show-tags-in-columns  "Agenda tags")
-("j" org-adjust-region "Adjust list in region"))
+  ("1" ((lambda () (interactive) (find-file "~/.emacs.d/init.el"))))
+  ("2" ((lambda () (interactive) (find-file "~/.emacs.d/manual-packages/helpers1.el"))))
+  ("3" ((lambda () (interactive) (find-file "~/.emacs.d/manual-packages/helper-hydras.el"))))
+  ("o" ((lambda () (interactive) (find-file "~/.config/openbox/rc.xml"))))
+  ("z" ((lambda () (interactive) (find-file "~/.zshrc"))))
+  ("g" ((lambda () (interactive) (find-file "~/org/general.org"))))
+  ("s" ((lambda () (interactive) (helm-find-files "~/scripts/"))))
+  ("x" (lambda () (interactive) (shell-command "keyboard_config.sh")))
+  ("i" (insert (format "(setq company-backends '%s" company-backends)))
+  ("<f2>" helper-reload-settings))
 
 ;;;;; F1-fonts
 (defhydra helper-hydra-fonts (:hint nil)
@@ -744,24 +762,22 @@ _g_: general
 ;;;; Org-mode keymaps
  ;;;; Hyper (rctl) 
  ;;;;; semantic/outline (wasd and arrows)
-(global-set-key (kbd "H-w") 'hyper-up)
+
+;; (global-set-key (kbd "H-e") 'eval-region)
+
+(global-set-key (kbd "H-w") 'outline-up-heading)
 (global-set-key (kbd "H-a") 'hyper-left)
 (global-set-key (kbd "H-s") 'hyper-down)
 (global-set-key (kbd "H-d") 'hyper-right)
+
+(global-set-key (kbd "<H-kp-subtract>") 'text-scale-decrease)
+(global-set-key (kbd "<H-kp-add>") 'text-scale-increase)
+
 
 (global-set-key (kbd "H-SPC") 'helm-all-mark-rings)
 (global-set-key (kbd "<H-tab>") 'org-todo-list)
 
 
-(global-set-key (kbd "<H-right>") (lambda()
-				    (interactive)
-				    (ignore-errors (outline-up-heading -1))
-				    (outshine-narrow-to-subtree)))
-
-(global-set-key (kbd "<H-left>") 'widen)
-
-(global-set-key (kbd "<H-up>") 'outline-up-heading)
-(global-set-key (kbd "<H-down>") 'outline-next-heading)
 (global-set-key (kbd "<H-return>") 'org-journal-new-entry)
 
 
@@ -789,7 +805,8 @@ _g_: general
 (progn
    ;; define a prefix keymap
    (define-prefix-command 'rshiftmap)
-;;   (define-key rshiftmap [f9] 'er/expand-region)
+   ;;   (define-key rshiftmap [f9] 'er/expand-
+   (define-key rshiftmap [f9] 'ace-window)
    (define-key rshiftmap [? ] 'srefactor-refactor-at-point)
    (define-key rshiftmap (kbd "c") 'aya-create)
    (define-key rshiftmap (kbd "e") 'aya-expand)
@@ -798,12 +815,13 @@ _g_: general
    (define-key rshiftmap [?\t] 'org-global-cycle)
 
    (define-key rshiftmap [?\r]
-     (lambda() (interactive) (let ((current-prefix-arg 4)) (call-interactively 'helm-ag))))
-
+     (lambda()
+       (interactive)
+       (let ((current-prefix-arg 4)) (call-interactively 'helm-ag))))
+   
    (define-key rshiftmap [?\d] 'kill-whitespace)
-   (define-key rshiftmap (kbd "/") 'hs-toggle-hiding)
+   (define-key rshiftmap (kbd "<deletechar>") 'kill-whitespace)
    (define-key rshiftmap (kbd "=") 'align-using-char)
-
    (define-key rshiftmap (kbd "<up>")
      (lambda() (interactive) (windmove-emacs-or-tmux "up" "tmux select-pane -U")))
    (define-key rshiftmap (kbd "<down>")
@@ -847,7 +865,7 @@ _g_: general
    (define-key rshiftmap [f8] 'helm-semantic-or-imenu))
 
 
-;;;;; KP map
+;;;;; numpad / kp map
 ;; (global-set-key [kp-multiply] 'ace-jump-mode)
 (global-set-key [kp-multiply] 'ace-jump-mode)
 ;;;;;; . for yasnippet
@@ -865,6 +883,9 @@ _g_: general
 (global-set-key [C-kp-0] 'helm-semantic-or-imenu)
 (global-set-key [kp-insert] 'helm-navi-headings)
 (global-set-key [C-kp-insert] 'helm-semantic-or-imenu)
+;;;;;; 1-4 axis: clock in and out
+(global-set-key [kp-end] 'org-clock-in)
+(global-set-key [kp-next] 'org-clock-out)
 
 ;;;;;; 4-6 axis: mark ring
 ;;;;;;; Pop mark
@@ -878,8 +899,6 @@ _g_: general
 (global-set-key [C-kp-4] 'helm-global-mark-ring)
 (global-set-key [C-kp-left] 'helm-global-mark-ring)
 (global-set-key [C-M-kp-4] 'helm-all-mark-rings)
-
-
 ;;;;;; 7-9 axis: next/prev buffer
 (global-set-key [kp-9] 'next-buffer)
 (global-set-key [kp-7] 'previous-buffer)

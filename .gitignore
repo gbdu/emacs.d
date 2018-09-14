@@ -24,3 +24,6 @@ newsticker/
 tramp
 /.cask
 
+/#recentf#
+/projectile-bookmarks.eld
+/narrowing.el
