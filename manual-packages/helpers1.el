@@ -1,7 +1,6 @@
-;; * Reload settings
-(defun helper-reload-settings ()
-  "Reload/re-eval ~/.emacs.d/init.el" (interactive)
-  (eval '(load-file "~/.emacs.d/init.el")))
+;; * Required
+(require 'cl) 
+
 
 ;; * eval-sexp-or-region
 (defun eval-sexp-or-region ()
@@ -72,7 +71,7 @@
     (goto-char last-item-pos)
     (org-list-repair)))))
 
-;; ** add ids to headlines
+;; ** Add ids to headlines
 (defun my/org-add-ids-to-headlines-in-file ()
   "Add ID properties to all headlines in the current file which do not already have one."
   (interactive)
@@ -158,7 +157,7 @@ family all work -- e.g., show-all; org-show-subtree; etc."
     (show-children)))
 
 ;; * File handling
-;; ** find sub dirs 
+;; ** Find sub dirs 
 (defun find-all-subdirectories(dir-list)
   "Returns a list of all recursive subdirectories of dir-list, 
    ignoring directories with names that start with . (dot)"
@@ -168,7 +167,7 @@ family all work -- e.g., show-all; org-show-subtree; etc."
              (mapconcat 'identity dir-list " ")
              " -type d -not -regex \".*/\\\..*\""))))
 
-;; ** open current file with xdg
+;; ** Open current file with xdg
 
 (defun xah-open-in-external-app ()
   "Open the current file or dired marked files in external app.
@@ -235,9 +234,8 @@ Version 2016-10-15"
 ;;       ;; (shell-command "xdg-open .") ;; 2013-02-10 this sometimes froze emacs till the folder is closed. eg with nautilus
 ;;       ))))
 
-;; ** get closest path name
+;; ** Get closest path name
 
-(require 'cl) ; If you don't have it already
 
 (defun* get-closest-pathname (&optional (file "Makefile"))
   "Determine the pathname of the first instance of FILE starting from
@@ -283,7 +281,7 @@ the name of FILE in the current directory, suitable for creation"
 	  (re-search-forward "[ \t\r\n]+" nil t)
 	  (replace-match "" nil nil))))))
 
-;; ** align text
+;; ** Align text
 (defun align-to-equals (begin end)
   "Align region to equal signs"
    (interactive "r")
@@ -295,13 +293,18 @@ the name of FILE in the current directory, suitable for creation"
   (interactive "r\nsSpacer to use: ")
   (align-regexp begin end (concat "\\(\\s-*\\)" spacer) 1 1 ))
   
-;; ** move lines
+;; ** Move lines 
 (defun move-line-up ()
   "Move up the current line."
   (interactive)
   (transpose-lines 1)
   (forward-line -2)
   (indent-according-to-mode))
+
+
+
+
+
 
 (defun move-line-down ()
   "Move down the current line."
@@ -313,15 +316,29 @@ the name of FILE in the current directory, suitable for creation"
 
 
 ;; * Hyper Navigation
-
 ;; ** Hyper navigation (semantic-outline)
+;; ** extract-comment-from-tag  
+(defun extract-comment-from-tag ()
+  (interactive)
+  (progn
+    (senator-copy-tag-to-register 'a)
+    (beginning-of-defun-comments)
+    (outshine-insert-heading)
+    (insert-register 'a)
+    (re-search-forward "(" nil t)
+    (replace-match " ")
+    (re-search-forward ")" nil t)
+    (replace-match " ")))
 
+
+;; ** hyper-nav-up-or-previous  
 (defun hyper-nav-up-or-previous ()
   (interactive)
   ;; (message (format "%s" (outline-up-heading -1))))
   (outline-up-heading -1))
 
 
+;; ** hyper-left  
 (defun hyper-left ()
   (interactive)
   (condition-case nil
@@ -333,10 +350,14 @@ the name of FILE in the current directory, suitable for creation"
 	     (outline-previous-heading)
 	     (outline-show-entry)))))
 
+;; ** hyper-right  
 (defun hyper-right ()
   (interactive)
-  (senator-fold-tag-toggle))
+  (cond
+   ((org-at-heading-p) (outline-cycle))
+   (t (senator-fold-tag-toggle))))
 
+;; ** hyper-up  
 (defun hyper-up ()
   "go up semantically or in outline"
   (interactive)
@@ -346,6 +367,7 @@ the name of FILE in the current directory, suitable for creation"
 	     (outline-up-heading 1)
 	     (outline-show-entry)))))
 
+;; ** hyper-down  
 (defun hyper-down ()
   "go down semantically or in outline"
   (interactive)
@@ -362,6 +384,7 @@ the name of FILE in the current directory, suitable for creation"
 ;; * context help
 ;; help-window that will automatically update to
 ;; display the help of the symbol before point.
+
 (defun toggle-context-help ()
   "Turn on or off the context help.
 Note that if ON and you hide the help buffer then you need to
@@ -392,6 +415,7 @@ context-help to false"
            (describe-function rgr-symbol)
          (if (boundp  rgr-symbol) (describe-variable rgr-symbol)))))))
 
+;; * eldoc-print-current-symbol-info  
 (defadvice eldoc-print-current-symbol-info
   (around eldoc-show-c-tag activate)
   (cond
@@ -451,7 +475,7 @@ buffer."
                 (mapc (lambda (key) (local-set-key (kbd key) 'jump-tree-view))
                 '("<mouse-1>" "RET")))))))
 
-;; * jump to cloned buffer 
+;; ** jump to cloned buffer 
 (defun jump-tree-view()
   "Switch to a cloned buffer's base buffer and move point to the cursor position in the clone."
   (interactive)
@@ -534,7 +558,43 @@ and set the focus back to Emacs frame"
           (hs-show-all))
     (toggle-selective-display column)))
 
-;; * provide 
+
+(defun toggle-window-zoom ()
+  "Toggles one window zoom and switches back using winner"
+  (interactive)
+  (let ((len (length (window-list))))
+    (if (equal 1 len)
+	(winner-undo)
+      (delete-other-windows))))
+
+
+(defun toggle-window-zoom2 ()
+  "docstring"
+  (interactive)
+  (let ((len (length (window-list))))
+    (if (equal 1 len)
+	(progn (jump-to-register 'a))
+
+      (progn (window-configuration-to-register 'a)
+	     (delete-other-windows)))))
+
+;; (defun check-register (args)
+;;   "docstring"
+;; ;;  (get-register 119)
+;;   (message "%s aaaa" (car args))
+;;   (set-window-configuration (car args))
+
+;;   )
+;; window-configuration-to-register (C-x r w)
+;; (let ((list (copy-sequence register-alist)))
+;;   (dolist (elt list)
+;;     (when (get-register (car elt))
+;;     (check-register (get-register (car elt))))))
+
+;; (register-alist)
+;; (toggle-window-zoom)
+
+;; * Provide 
 (provide 'helpers1)
 
 

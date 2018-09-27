@@ -1,4 +1,9 @@
-;;; Package
+;;; Reload settings
+(defun helper-reload-settings ()
+  "Reload/re-eval ~/.emacs.d/init.el" (interactive)
+  (eval '(load-file "~/.emacs.d/init.el")))
+
+;;; Package management
 ;;;; melpa
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
@@ -6,27 +11,37 @@
   (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
 (package-initialize)
 
-;;;; use-package
+;;;; require 
 (eval-when-compile
   (add-to-list 'load-path "~/.emacs.d/manual-packages")
   (require 'use-package)
-  (require 'helpers1))
+  (require 'helpers1)
+  (require 'recentf)
+  (require 'helper-hydras)
+  (require 'mouse)
+  (require 'xclip)
+  (require 'scpaste)
+  (require 'dash)
+  (require 'outshine))
+
+;;;; use-package
+
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
+
 (setq use-package-always-ensure t)
 
 
 ;;; Hydras 
 (use-package hydra)
-(require 'helper-hydras)
 
 ;;; Defaults, visual, and editting style
 ;;;; Visual
 ;;;;; No splash screen and toolbar 
 (setq inhibit-splash-screen 't)
 (tool-bar-mode -1)
-
+(menu-bar-mode 1)
 ;;;;; Default font
 (add-to-list 'default-frame-alist '(font . "Neep-10" ))
 (set-face-attribute 'default t :font "Neep-10" )
@@ -76,7 +91,7 @@
 ;;;; auto fill mode 
 (auto-fill-mode)
 ;;;; Enable mouse
-(require 'mouse)
+
 (xterm-mouse-mode 1)
 ;;;; Stop ESC ESC ESC from destroying windows
 (defadvice keyboard-escape-quit (around my-keyboard-escape-quit activate)
@@ -88,7 +103,7 @@
       (fset 'one-window-p (symbol-function 'orig-one-window-p)))))
 
 ;;;; Integrate X11 xclipboard with emacs 
-(require 'xclip)
+
 (setq x-select-enable-clipboard t) ;; Ctrl+c in Linux X11
 (setq x-select-enable-primary t) ;;selection in X11
 (xclip-mode 1)
@@ -101,6 +116,14 @@
 ;;;;; Winner and windmove 
 (winner-mode 1) ;; remember window layouts
 ;; (setq windmove-wrap-around t) ;; warning: this breaks tmux windmove
+
+;; (require 'window-purpose)
+;; (purpose-mode)
+
+
+;; (add-to-list 'purpose-user-mode-purposes '(python-mode . py))
+;; (add-to-list 'purpose-user-mode-purposes '(inferior-python-mode . py-repl))
+;; (purpose-compile-user-configuration)
 
 ;;;;; use only one desktop for saving layouts
 (setq desktop-path '("~/.emacs.d/"))
@@ -205,6 +228,7 @@
 
 ;;; Helm
 ;;;; helm
+
 (require 'helm-config)
 
 (global-set-key (kbd "<f7>") 'helm-command-prefix)
@@ -261,14 +285,15 @@
 
 ;;; Files & history
 ;;;; Backup/autosaves
+
 (setq
-   backup-by-copying t      ; don't clobber symlinks
+   backup-by-copying t
    backup-directory-alist '(("~/org/" . "/dev/null")
 			    ("." . "~/emacs-backups/"))
    delete-old-versions t
    kept-new-versions 4
    kept-old-versions 2
-   version-control t)       ; use versioned backups
+   version-control t)      ; use versioned backups
 
 (dir-locals-set-class-variables
  'nobackup-directory
@@ -280,6 +305,7 @@
 
 (auto-save-mode)
 
+
 ;;;; undo-tree (disabled)
 ;; (use-package undo-tree :config
 ;;   (setq undo-tree-auto-save-history t)
@@ -288,8 +314,7 @@
 
 ;;   (global-undo-tree-mode))
 
-;;;; savehist and save-place-mode
-;; remember place in buffer
+;;;; savehist and save-place-mode (remember place in buffer)
 (use-package savehist
   :init (progn (savehist-mode 1)
 	       (save-place-mode 1))
@@ -303,12 +328,12 @@
 		    regexp-search-ring))))
 
 ;;;; recentf
-(require 'recentf)
-(setq recentf-max-saved-items 2000 )
-(setq recentf-auto-cleanup 'never  )
-(setq recentf-max-menu-items 200)
-(recentf-mode 1)
 
+(setq recentf-max-saved-items 2000
+      recentf-auto-cleanup 'never  
+      recentf-max-menu-items 200)
+
+(recentf-mode 1)
 (run-at-time (current-time) 140 (lambda ()
 				  (let ((inhibit-message t))
 				    (recentf-save-list))))
@@ -318,6 +343,7 @@
   :config (progn
 	    (setq fasd-enable-initial-prompt nil)
 	    (global-fasd-mode 1)))
+
 
 ;;; Web
 ;;;; Default browser
@@ -334,18 +360,25 @@
   (setq helm-google-suggest-use-curl-p t))
 
 ;;;; SCP paste
-(require 'scpaste)
 (setq scpaste-http-destination "http://frezr.com/paste"
       scpaste-scp-destination "frezr.com:p/paste/")
 
 ;;; Completion & programming
+;;;; whichkey
+(which-key-mode 1)
 ;;;; Python
-
-
 (org-babel-do-load-languages
  'org-babel-load-languages
  '((emacs-lisp . t)
    (python . t)))
+;;;;; default virtualenv
+(setenv "WORKON_HOME" "/home/garg/virtualenvs")
+(pyvenv-workon "django2")
+
+;;;;; elpy 
+(setq elpy-rpc-backend "jedi")
+(when (require 'elpy nil t)
+  (elpy-enable))
 
 
 ;;;; company
@@ -353,29 +386,20 @@
   :config
   (progn
     (add-hook 'after-init-hook 'global-company-mode)
-    (setq company-dabbrev-downcase 0)
-    (setq company-idle-delay 0.1)
-    (setq company-minimum-prefix-length 1)
-    (setq company-show-numbers t)
-    (setq company-dabbrev-time-limit 0.5)
-    (setq company-transformers nil)))
-
+    (setq company-dabbrev-downcase 0
+	  company-idle-delay 0.1
+	  company-minimum-prefix-length 1
+	  company-show-numbers t
+	  company-dabbrev-time-limit 0.5
+	  company-transformers nil)))
 ;;;; lsp-mode
 (use-package lsp-mode
   :config
-  (setq lsp-highlight-symbol-at-point nil)
-  
-
-  ;; (add-hook 'python-mode-hook
-  ;;           (lambda ()
-  ;;             (lsp-python-enable)))
-
-  )
+  (setq lsp-highlight-symbol-at-point nil))
 
 ;;;; lsp-ui
 (use-package lsp-ui
   :init (add-hook 'lsp-after-open-hook #'lsp-ui-mode)
-;;  :hook (lsp-mode . lsp-ui-mode)
   :config
   (progn
     (setq lsp-ui-peek-always-show t)
@@ -389,24 +413,13 @@
 (use-package flycheck
   :ensure t
   :config
+  (add-hook 'sh-mode-hook 'flycheck-mode)
   (add-hook 'c-mode-hook (lambda () (setq flycheck-checker 'lsp)))
   (add-hook 'c-mode-hook (lambda() (flycheck-mode)))
   (add-hook 'c++-mode-hook (lambda () (setq flycheck-checker 'lsp)))
   (add-hook 'c++-mode-hook (lambda() (flycheck-mode))))
 
-;;;; lsp-python
 
-(setenv "WORKON_HOME" "/home/garg/virtualenvs")
-
-
-(when (require 'elpy nil t)
-  (elpy-enable))
-
-(setq elpy-rpc-backend "jedi")
-(pyvenv-workon "django2")
-
-;; (use-package lsp-python
-;;   :hook (python-mode . lsp-python-enable))
 
 (add-hook 'company-mode-hook
           (lambda ()
@@ -433,12 +446,10 @@
 (add-hook 'semantic-mode-hook #'et/semantic-remove-hooks)
 (setq semanticdb-default-save-directory "~/.emacs.d/semanticdb")
 (semantic-mode 1)
-
 ;; (global-semantic-idle-scheduler-mode 1)
 
+
 ;;;; cquery
-
-
 (use-package cquery
   :config
   (progn
@@ -475,66 +486,22 @@
 (use-package stickyfunc-enhance
   :config (add-to-list 'semantic-default-submodes 'global-semantic-stickyfunc-mode))
 
-;;;; Folding/hideshow
-;;;;; Hideshow
-(setq hs-isearch-open 't)
-(setq hs-set-up-overlay 'display-code-line-counts)
-
-
-;; (require 'hideshow-org)
-;; (add-hook 'c++-mode-hook 'hs-minor-mode)
-
-(require 'hideshowvis)
-(autoload 'hideshowvis-enable "hideshowvis" "Highlight foldable regions")
-(autoload 'hideshowvis-minor-mode "hideshowvis"
-  "Will indicate regions foldable with hideshow in the fringe."
-  'interactive)
-
-;;          (hideshow-enable)
-;;   (dolist (hook (list 'emacs-lisp-mode-hook
-;;                   'c++-mode-hook))
-;; (add-hook hook 'hideshowvis-enable))
-
-(defvar ihs-special-modes-alist
-  (mapcar 'purecopy
-          '((c-mode "{" "}" "/[*/]" nil nil)
-            (c++-mode "{" "}" "/[*/]" nil nil)
-            (c++-mode "//{" "//}" "/[*/]" nil nil)
-
-            (bibtex-mode ("@\\S(*\\(\\s(\\)" 1))
-            (java-mode "{" "}" "/[*/]" nil nil)
-            (js-mode "{" "}" "/[*/]" nil))))
-
-;; Hide the comments too when you do a 'hs-hide-all'
-(setq hs-hide-comments nil)
-;; Set whether isearch opens folded comments, code, or both
-;; where x is code, comments, t (both), or nil (neither)
-
-
-;;;;; Outshine
-(require 'dash)
-(require 'outshine)
+;;;; Outshine/code folding
 ;; (setq outshine-org-style-global-cycling-at-bob-p t)
 ;; (setq outshine-startup-folded-p t)
 
 (setq outshine-use-speed-commands t)
-
 (add-hook 'outline-minor-mode-hook
 	  (lambda ()
 	    (local-set-key (kbd "C-c C-t") 'outshine-todo)
 	    (local-set-key [kp-end] 'outshine-clock-in)
 	    (local-set-key [kp-next] 'outshine-clock-out)
 	    (local-set-key [kp-0] 'helm-navi-headings)
-	    (local-set-key (kbd "<C-return>") 'outline-insert-heading)))
-
-;; 
-;; (with-eval-after-load "outline"
-;;   (progn (local-set-key "<C-return>" 'outline-insert-heading)
-;; 	 (local-set-key [kp-0] 'helm-navi-headings)))
+	    (local-set-key (kbd "<C-return>") 'outline-insert-heading)
+	    (local-set-key (kbd "<C-M-return>") 'extract-comment-from-tag)))
 
 ;; Required for outshine
 (add-hook 'outline-minor-mode-hook 'outshine-hook-function)
-
 ;; Enables outline-minor-mode for *ALL* programming buffers
 (add-hook 'conf-mode-hook 'outline-minor-mode)
 (add-hook 'prog-mode-hook 'outline-minor-mode)
@@ -575,8 +542,9 @@
 ))
 (setq-default ff-other-file-alist 'my-cpp-other-file-alist)
 
+
 ;;; Keymaps
-;;;; org mode 
+;;;; Org mode 
 (with-eval-after-load "org"
   (progn (define-key org-mode-map [kp-0] 'helm-org-rifle)
 	 (define-key org-mode-map [M-up] 'outline-previous-heading)
@@ -586,42 +554,53 @@
 	 (define-key org-mode-map [C-M-s-up] 'org-shiftmetaup)
 	 (define-key org-mode-map [C-M-s-down] 'org-shiftmetadown)
 	 (define-key org-mode-map [kp-end] 'org-clock-in)
-	 (define-key org-mode-map [kp-next] 'org-clock-out)
-	 ))
+	 (define-key org-mode-map [kp-next] 'org-clock-out)))
 
-;;;; TODO misc
-;; TODO bind forward-list and backward-list
+(global-set-key (kbd "<H-tab>") 'org-todo-list)
+(global-set-key (kbd "<H-return>") 'org-journal-new-entry)
 
-;; (define-key company-active-map (kbd "C-TAB")
-;;   'company-complete-common-or-cycle)
+;;;; Outline/semantic Hyper navigation 
 
+(global-set-key (kbd "H-w") 'outline-up-heading)
+(global-set-key (kbd "H-a") 'hyper-left)
+(global-set-key (kbd "H-s") 'hyper-down)
+(global-set-key (kbd "H-d") 'hyper-right)
 
-;; (global-set-key (kbd "<H-right>") (lambda()
-;; 				    (interactive)
-;; 				    (ignore-errors (outline-up-heading -1))
-;; 				    (outshine-narrow-to-subtree)))
+;;;; bspc compatible window switching 
+(global-set-key (kbd "<s-left>")
+		'(lambda()
+		   (interactive)
+		   (windmove-emacs-or-tmux
+		    "left" "bspc node -f west; if [ $? -gt 0 ]; then bspc desktop -f prev; fi;")))
+(global-set-key (kbd "<s-right>")
+		'(lambda()
+		   (interactive)
+		   (windmove-emacs-or-tmux
+		    "right" "bspc node -f east; if [ $? -gt 0 ]; then bspc desktop -f next; fi;")))
+(global-set-key (kbd "<s-down>")
+		'(lambda()
+		   (interactive) (windmove-emacs-or-tmux "down" "bspc node -f south")))
+(global-set-key (kbd "<s-up>")
+		'(lambda()
+		   (interactive) (windmove-emacs-or-tmux "up" "bspc node -f north")))
 
-;; (global-set-key (kbd "<H-left>") 'widen)
-;; (global-set-key (kbd "<H-up>") 'outline-up-heading)
-;; (global-set-key (kbd "<H-down>") 'outline-next-heading)
+;; (global-set-key (kbd "<s-left>") 'windmove-left)
+;; (global-set-key (kbd "<s-up>") 'windmove-up)
+;; (global-set-key (kbd "<s-down>") 'windmove-)
 
 
 (global-set-key (kbd "<S-up>") 'outline-up-heading)
 (global-set-key (kbd "<S-down>") 'outline-forward-same-level)
-
 (global-set-key (kbd "<backtab>") 'switch-to-previous-buffer)
 (global-set-key (kbd "<f12>") 'helm-mini)
 (global-set-key (kbd "<C-f12>") 'fasd-find-file)
 (global-set-key (kbd "<M-f12>") 'helm-recentf)
-
 (global-set-key (kbd "C-j") 'join-line)
 
 (global-set-key (kbd "C-*") 'destroy-win)
 
 (global-set-key (kbd "<C-escape>") 'delete-frame)
-(global-set-key (kbd "<C-f9>") 'ace-jump-mode)
-(global-set-key (kbd "<M-f9>") 'avy-goto-word-0)
-(global-set-key (kbd "<M-f8>") 'avy-goto-char)
+
 
 (global-set-key (kbd "C-c l") 'org-store-link)
 
@@ -631,6 +610,7 @@
 
 (global-set-key [(control shift up)]  'move-line-up)
 (global-set-key [(control shift down)]  'move-line-down)
+
 
 ;;;; F1 hydra
 ;;;;; F1-Main 
@@ -709,12 +689,10 @@
 
 ("BS" (lambda () (interactive)
 	(setq-local company-backends (remove 'company-semantic company-backends)))))
-
 (global-unset-key (kbd "<f1>"))
 (global-set-key (kbd "<f1>") 'hydra-f1/body)
 
-
-;;;;; F1-settings/shortcuts
+;;;;; F1-shortcuts
 (defhydra helper-hydra-shortcuts (:color blue :hint nil)
 "
               ^Settings^
@@ -740,58 +718,23 @@ _g_: general.org
   ("i" (insert (format "(setq company-backends '%s" company-backends)))
   ("<f2>" helper-reload-settings))
 
-;;;;; F1-fonts
-(defhydra helper-hydra-fonts (:hint nil)
-  "
-1: Fira-9
-2: Terminus-9
-3: Iosevka-10
-4: Neep-10
-5: Lime-8
-"
-  
-  ("<right>" text-scale-increase "in")
-  ("<left>" text-scale-decrease "out")
-  ("1" (set-default-font "Fira Mono Medium-9")  "Fira-9")
-  ("2" (set-default-font "Terminus-9") "terminus-9")
-  ("3" (set-default-font "Iosevka-10:weight=Semibold") "Ioveska-10")
-  ("4" (set-default-font "Neep-10")  "Neep")
-  ("5" (set-default-font "lime-8")  "lime")
-  )
 
-;;;; Org-mode keymaps
- ;;;; Hyper (rctl) 
- ;;;;; semantic/outline (wasd and arrows)
 
-;; (global-set-key (kbd "H-e") 'eval-region)
 
-(global-set-key (kbd "H-w") 'outline-up-heading)
-(global-set-key (kbd "H-a") 'hyper-left)
-(global-set-key (kbd "H-s") 'hyper-down)
-(global-set-key (kbd "H-d") 'hyper-right)
 
 (global-set-key (kbd "<H-kp-subtract>") 'text-scale-decrease)
 (global-set-key (kbd "<H-kp-add>") 'text-scale-increase)
-
-
 (global-set-key (kbd "H-SPC") 'helm-all-mark-rings)
-(global-set-key (kbd "<H-tab>") 'org-todo-list)
-
-
-(global-set-key (kbd "<H-return>") 'org-journal-new-entry)
-
 
 ;;;;; Fill region 
 (global-set-key (kbd "C-H-f") 'org-adjust-region)
 (global-set-key (kbd "M-H-f") 'fill-region-as-paragraph)
 (global-set-key (kbd "H-f") 'fill-region)
 
-
 ;;;; rmenu 
 (global-set-key [f8] 'rmenumap)
 (progn
   (define-prefix-command 'rmenumap)
-
   (define-key rmenumap [f8] (lambda () (interactive) (org-show-current-heading-tidily)))
   (define-key rmenumap [right] (lambda() (interactive) (enlarge-window-horizontally 15)))
   (define-key rmenumap [left] (lambda() (interactive) (shrink-window-horizontally 15)))
@@ -799,21 +742,23 @@ _g_: general.org
   (define-key rmenumap [up] (lambda() (interactive) (shrink-window 5))))
 
 
-
 ;;;; rshift (F9) map
+;; (global-set-key (kbd "<C-f9>") 'ace-jump-mode)
+
+(global-set-key (kbd "<C-f9>") 'helm-all-mark-rings)
+(global-set-key (kbd "<M-f9>") 'avy-goto-word-0)
+(global-set-key (kbd "<M-f8>") 'avy-goto-char)
+
 (global-set-key [f9] 'rshiftmap)
 (progn
    ;; define a prefix keymap
    (define-prefix-command 'rshiftmap)
-   ;;   (define-key rshiftmap [f9] 'er/expand-
-   (define-key rshiftmap [f9] 'ace-window)
+   (define-key rshiftmap [f9] 'ace-window)   
    (define-key rshiftmap [? ] 'srefactor-refactor-at-point)
    (define-key rshiftmap (kbd "c") 'aya-create)
    (define-key rshiftmap (kbd "e") 'aya-expand)
-   (define-key rshiftmap (kbd "o") 'aya-open-line)
-   
+   (define-key rshiftmap (kbd "o") 'aya-open-line)   
    (define-key rshiftmap [?\t] 'org-global-cycle)
-
    (define-key rshiftmap [?\r]
      (lambda()
        (interactive)
@@ -868,6 +813,7 @@ _g_: general.org
 ;;;;; numpad / kp map
 ;; (global-set-key [kp-multiply] 'ace-jump-mode)
 (global-set-key [kp-multiply] 'ace-jump-mode)
+
 ;;;;;; . for yasnippet
 (global-set-key [kp-decimal] 'yas/insert-snippet)
 (global-set-key [C-kp-decimal] 'yas-new-snippet)
@@ -883,9 +829,17 @@ _g_: general.org
 (global-set-key [C-kp-0] 'helm-semantic-or-imenu)
 (global-set-key [kp-insert] 'helm-navi-headings)
 (global-set-key [C-kp-insert] 'helm-semantic-or-imenu)
+
+(global-set-key [kp-5] 'toggle-window-zoom)
+(global-set-key [C-kp-5] 'fit-window-to-buffer)
+
+(global-set-key [C-next] (lambda () (interactive) (enlarge-window -5)))
+(global-set-key [M-previous] (lambda () (interactive) (enlarge-window 5)))
+
 ;;;;;; 1-4 axis: clock in and out
 (global-set-key [kp-end] 'org-clock-in)
 (global-set-key [kp-next] 'org-clock-out)
+
 
 ;;;;;; 4-6 axis: mark ring
 ;;;;;;; Pop mark
@@ -991,6 +945,9 @@ _g_: general.org
  '(nrepl-message-colors
    (quote
     ("#CC9393" "#DFAF8F" "#F0DFAF" "#7F9F7F" "#BFEBBF" "#93E0E3" "#94BFF3" "#DC8CC3")))
+ '(org-agenda-files
+   (quote
+    ("/home/garg/org/notes/python.org" "/home/garg/org/notes/opengl.org" "/home/garg/org/archive.org" "/home/garg/org/discrete-math.org" "/home/garg/org/general.org" "/home/garg/org/taskplan.org" "/home/garg/org/journal/20180917.org")))
  '(org-bullets-bullet-list (quote ("◉" "○" "◦" "•")))
  '(org-journal-dir "~/org/journal/")
  '(org-journal-enable-agenda-integration t)
@@ -1004,7 +961,7 @@ _g_: general.org
  '(outline-minor-mode-prefix "M-#")
  '(package-selected-packages
    (quote
-    (common-lisp-snippets lsp-html yasnippet-classic-snippets python-docstring org-projectile-helm pyvenv org-pdfview helpful powerline org-journal paredit clojure-mode react-snippets lsp-go srefactor-lisp helm-navi navi-mode use-package ace-jump-mode company-box lsp-ui company-lsp lsp-clangd cquery helm-firefox eyebrowse xpm stickyfunc-enhance company-rtags helm-org-rifle helm-google company-web company-lua company-quickhelp helm-ag outshine neotree fold-dwim-org htmlize org-elisp-help elpa-mirror ecb workgroups2 helm-xref pelican-mode ox-rst goto-last-change helm-company imenu-anywhere company-shell c-eldoc flycheck-irony company-irony-c-headers company-irony irony srefactor glsl-mode lua-mode undo-tree yasnippet-snippets rotate cmake-mode auctex headlong ace-window org-bullets autopair babel hydra which-key ox-reveal auto-yasnippet org-brain pc-bufsw buffer-stack helm-w3m sublime-themes go-mode gnugo go doremi-frm evil-magit vdiff-magit magit helm-dired-recent-dirs helm-dired-history ripgrep company-c-headers company projectile-speedbar sr-speedbar function-args helm-gtags projector projectile helm-projectile ag dumb-jump expand-region virtualenv flymake-lua xclip elpy fzf fasd bookmark+ helm-bm pdf-tools helm switch-window dracula-theme)))
+    (window-purpose unicode-input common-lisp-snippets lsp-html yasnippet-classic-snippets python-docstring org-projectile-helm pyvenv org-pdfview helpful powerline org-journal paredit clojure-mode react-snippets lsp-go srefactor-lisp helm-navi navi-mode use-package ace-jump-mode company-box lsp-ui company-lsp lsp-clangd cquery helm-firefox eyebrowse stickyfunc-enhance company-rtags helm-org-rifle helm-google company-web company-lua company-quickhelp helm-ag outshine neotree fold-dwim-org htmlize org-elisp-help elpa-mirror ecb helm-xref pelican-mode goto-last-change helm-company imenu-anywhere company-shell c-eldoc srefactor glsl-mode lua-mode undo-tree yasnippet-snippets rotate cmake-mode auctex headlong ace-window org-bullets autopair babel hydra which-key ox-reveal auto-yasnippet org-brain pc-bufsw buffer-stack helm-w3m sublime-themes go-mode gnugo go doremi-frm evil-magit vdiff-magit magit helm-dired-recent-dirs helm-dired-history ripgrep company-c-headers company projectile-speedbar sr-speedbar function-args helm-gtags projector projectile helm-projectile ag dumb-jump expand-region virtualenv flymake-lua xclip elpy fzf fasd bookmark+ helm-bm pdf-tools helm switch-window dracula-theme)))
  '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
  '(pyvenv-exec-shell "/usr/bin/zsh")
  '(pyvenv-mode t)

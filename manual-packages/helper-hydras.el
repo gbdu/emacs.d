@@ -383,5 +383,28 @@ Frames: _f_rame new  _df_ delete
   ("q" nil :color blue))
 
 
+;;; Fonts 
+(defhydra helper-hydra-fonts (:hint none)
+  "
+1: Neep-10
+2: Terminus-9
+3: Lime-8
+4: Fira Mono-9
+5: Iosevka-10
+6: Monaco-9 
+7: Ubuntu Mono-11
+8: Space Mono-10
+"
+  ("<right>" text-scale-increase "in")
+  ("<left>" text-scale-decrease "out")
+  ("1" (set-default-font "Neep-10")  "Neep")
+  ("2" (set-default-font "Terminus-9") "terminus-9")
+  ("3" (set-default-font "lime-8")  "lime")
+  ("4" (set-default-font "Fira Mono Medium-9")  "Fira-9")
+  ("5" (set-default-font "Iosevka-10:weight=Semibold") "Ioveska-10")
+  ("6" (set-default-font "Monaco-9") "Monaco-9")
+  ("7" (set-default-font "Ubuntu Mono-11") "Ubuntu Mono-10")
+  ("8" (set-default-font "Space Mono-10") "Space Mono-10"))
+
 ;;; Provide
 (provide 'helper-hydras) ;; helper-hydras.ends
