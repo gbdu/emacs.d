@@ -1,0 +1,1 @@
+(t (0 0 133 61) (:purpose general :purpose-dedicated t :width 1.0390625 :height 0.14516129032258066 :edges (0.0 0.0 1.0390625 0.14516129032258066)) (:purpose py :purpose-dedicated nil :width 1.0390625 :height 0.8387096774193549 :edges (0.0 0.14516129032258066 1.0390625 0.9838709677419355)))

@@ -1,0 +1,29 @@
+;;;;; Hideshow
+(setq hs-isearch-open 't)
+(setq hs-set-up-overlay 'display-code-line-counts)
+;; (require 'hideshow-org)
+;; (add-hook 'c++-mode-hook 'hs-minor-mode)
+(require 'hideshowvis)
+(autoload 'hideshowvis-enable "hideshowvis" "Highlight foldable regions")
+(autoload 'hideshowvis-minor-mode "hideshowvis"
+  "Will indicate regions foldable with hideshow in the fringe."
+  'interactive)
+;;          (hideshow-enable)
+;;   (dolist (hook (list 'emacs-lisp-mode-hook
+;;                   'c++-mode-hook))
+;; (add-hook hook 'hideshowvis-enable))
+
+(defvar ihs-special-modes-alist
+  (mapcar 'purecopy
+          '((c-mode "{" "}" "/[*/]" nil nil)
+            (c++-mode "{" "}" "/[*/]" nil nil)
+            (c++-mode "//{" "//}" "/[*/]" nil nil)
+
+            (bibtex-mode ("@\\S(*\\(\\s(\\)" 1))
+            (java-mode "{" "}" "/[*/]" nil nil)
+            (js-mode "{" "}" "/[*/]" nil))))
+
+;; Hide the comments too when you do a 'hs-hide-all'
+(setq hs-hide-comments nil)
+;; Set whether isearch opens folded comments, code, or both
+;; where x is code, comments, t (both), or nil (neither)

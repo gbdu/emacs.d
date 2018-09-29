@@ -1,4 +1,4 @@
-;; * Required
+http://frezr.com/paste/helpers1.el.full.html;; * Required
 (require 'cl) 
 
 
@@ -593,9 +593,6 @@ and set the focus back to Emacs frame"
 
 ;; (register-alist)
 ;; (toggle-window-zoom)
-
-;; * org-todo
-;; * helm sources 
 
 ;; * Provide 
 (provide 'helpers1)

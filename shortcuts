@@ -1,0 +1,12 @@
+~/.emacs.d/init.el
+~/.emacs.d/shortcuts
+~/.emacs.d/manual-packages/helpers1.el
+~/.emacs.d/manual-packages/helper-hydras.el
+~/.emacs.d/manual-packages/my-helm-sources.el
+~/.config/openbox/rc.xml
+~/.config/openbox/autostart
+~/.config/bspwm/bspwmrc
+~/.config/sxhkd/sxhkdrc
+~/.zshrc
+~/org/general.org
+

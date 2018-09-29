@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: reader
+# key: reader
+# --
+while IFS=${1: } read -r line; do
+(( idex=idex+1 ))
+
+done <<< \$(${1: });
