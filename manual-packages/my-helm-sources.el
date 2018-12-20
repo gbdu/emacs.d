@@ -58,8 +58,8 @@
 ;;; entry point my-helm-shortcuts
 (setq my-sources '(("Font" . my-change-font)
 		   ("Setting" . my-goto-settings)
-		   ("Shortcuts" . my-goto-shortcuts)
-		   ("Modes" . my-mode-shortcuts)
+		   ("Info" . my-info-shortcuts)
+		   
 		   ("TODO" . org-todo-list)))
 
 (defun my-helm-shortcuts ()

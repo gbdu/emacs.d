@@ -1,38 +1,4 @@
-;;; helper-hydras.el --- helpful hydras for many things
-;;; outline
-(defhydra hydra-outline (:color pink :columns 3 )
-"
-^Hide                                  ^Show              ^Move
-
-_
-"
-    ;; Hide
-    ("7" hide-sublevels "Hide everything but the top-level headings")
-    ("4" hide-body     "Hide everything but headings (all body lines)")
-    ("E" hide-entry    "Hide this entry's body")
-    ("C" hide-other    "Hide other branches")
-    ("B" hide-leaves   "Hide body lines in this entry and sub-entries")
-    ("T" hide-subtree  "Hide everything in this entry and sub-entries")
-    ;; Show
-    ("a" show-all          " Show (expand) everything")
-    ("b" show-branches     "Show all sub-headings under this heading")
-    ("t" show-subtree      "Show (expand) everything in this heading & below")
-    ("e" show-entry        "Show this heading's body")
-    ("c" show-children     "Show this heading's immediate child sub-headings")
-
-    ;; Move
-    ("w" outline-backward-same-level "backwards")       ; Backward - same level
-    ("W" outline-up-heading "Up")                ; Up
-    ("d" outline-forward-same-level "forward")        ; Forward - same level
-    ("D" outline-next-heading "next")
-    ("q" nil "leave") )
-  ;;  ("s" outline-next-visible-heading)      ; Next
-  ;;  ("w" outline-previous-visible-heading)  ; Previous
-
-
-
-;;; org utils 
-(defhydra helper-hydra-org-utils (:color blue)
+;;; help(defhydra helper-hydra-org-utils (:color blue)
   ("1" my/copy-id-to-clipboard "Copy headline ID")
   ("c" org-capture "Capture note")
   ("I" my/org-add-ids-to-headlines-in-file "ID all headlines")
@@ -408,3 +374,6 @@ Frames: _f_rame new  _df_ delete
 
 ;;; Provide
 (provide 'helper-hydras) ;; helper-hydras.ends
+(eq عيـن
+عيــن
+)

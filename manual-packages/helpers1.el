@@ -315,6 +315,13 @@ the name of FILE in the current directory, suitable for creation"
   (indent-according-to-mode))
 
 
+;; ** increment-number-at-point 
+(defun increment-number-at-point ()
+      (interactive)
+      (skip-chars-backward "0-9")
+      (or (looking-at "[0-9]+")
+          (error "No number at point"))
+      (replace-match (number-to-string (1+ (string-to-number (match-string 0))))))
 ;; * Hyper Navigation
 ;; ** Hyper navigation (semantic-outline)
 ;; ** extract-comment-from-tag  
@@ -595,7 +602,9 @@ and set the focus back to Emacs frame"
 ;; (toggle-window-zoom)
 
 ;; * org-todo
-;; * helm sources 
+;; Complemented with the mandatory shortcut:
+
+
 
 ;; * Provide 
 (provide 'helpers1)

@@ -1,35 +1,69 @@
 ;;; Reload settings
+;;;; helper-reload-settings ()
 (defun helper-reload-settings ()
-  "Reload/re-eval ~/.emacs.d/init.el" (interactive)
-  (eval '(load-file "~/.emacs.d/init.el")))
+   "Reload/re-eval init.el and make sure its being editted right now if an error occurs."
+   (interactive)
+   (progn
+     (condition-case nil
+	 (load-file "~/.emacs.d/init.el")
+       (error (progn (view-echo-area-messages)
+		     (find-file "~/.emacs.d/init.el")
+		     (check-parens))))))
+
+;;;; eval-and-replace ()
+(defun eval-and-replace ()
+  "Replace the preceding sexp with its value."
+  (interactive)
+  (backward-kill-sexp)
+  (prin1 (eval (read (current-kill 0)))
+         (current-buffer)))
+
+
+;; make sure we can always run this with alt-escp:
+(global-set-key (kbd "<M-ESC>") 'helper-reload-settings)
+
+(global-set-key (kbd "C-c C-e") 'eval-and-replace)
+
+
+
+
+
+;; (require 'my-helm-sources)
+;; (global-set-key (kbd "<H-tab>") 'my-helm-shortcuts)
 
 ;;; Package management
-;;;; melpa
+;;;; Melpa
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
 (when (< emacs-major-version 24)
   (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
 (package-initialize)
 
-;;;; require 
+;;;; Require 
 (eval-when-compile
   (add-to-list 'load-path "~/.emacs.d/manual-packages")
+
   (require 'use-package)
   (require 'helpers1)
-  
+  (require 'ehelp)
   (require 'recentf)
   (require 'helper-hydras)
   (require 'mouse)
-  (require 'xclip)
   (require 'scpaste)
-  (require 'dash)
-  (require 'outshine)
-  (require 'srefactor)
-  (require 'srefactor-lisp)
-  (require 'compile))
+  (require 'semantic)
+  (require 'outshine))
 
-;;;; use-package
 
+(require 'xclip)
+(require 'dash)
+(require 'compile)
+(require 'semantic/senator)
+(autoload 'senator-fold-tag-toggle "semantic/senator" nil t)
+
+;; (require 'srefactor)
+;; (require 'srefactor-lisp)
+
+;;;; Use-package
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
@@ -43,12 +77,15 @@
 ;;; Defaults, visual, and editting style
 ;;;; Visual
 ;;;;; No splash screen and toolbar 
+
 (setq inhibit-splash-screen 't)
 (tool-bar-mode -1)
 (menu-bar-mode 1)
+
 ;;;;; Default font
-(add-to-list 'default-frame-alist '(font . "Neep-10" ))
-(set-face-attribute 'default t :font "Neep-10" )
+
+(add-to-list 'default-frame-alist '(font . "Ubuntu Mono-12" ))
+(set-face-attribute 'default t :font "Ubuntu Mono-12" )
 
 ;;;;; Default theme
 (if (daemonp)
@@ -59,12 +96,12 @@
   (load-theme 'zenburn t))
 
 ;;;;; show-paren-mode
+
 (show-paren-mode)
 (setq blink-matching-delay 1)
 (setq blink-matching-paren t)
-
-
 (setq show-paren-style 'expression) ; highlight entire expression
+
 ;; (setq show-paren-style 'parenthesis) ; highlight brackets
 
 ;; blink-cursor-mode
@@ -214,6 +251,9 @@
                   directory org-agenda-file-regexp))
                '("~/org/notes" ) ) ) )
 
+(global-set-key (kbd "C-c a") 'org-agenda)
+(global-set-key (kbd "C-c SPC") 'org-capture)
+
 (mapc #'(lambda (item) (add-to-list 'org-agenda-files item))
       org-agenda-files-notes)
 
@@ -267,9 +307,6 @@
 	    (helm-mode 1)))
 
 
-(require 'my-helm-sources)
-(global-set-key (kbd "<H-tab>") 'my-helm-shortcuts)
-
 ;;;; helm-gtags
 (use-package helm-gtags
   :config (setq helm-gtags-ignore-case t
@@ -312,6 +349,9 @@
 
 (dir-locals-set-directory-class "~/org/journal" 'nobackup-directory)
 
+;; auto-save-mode
+
+(setq-local default-directory "~/.emacs.d/autosave")
 (setq auto-save-default t)
 
 (auto-save-mode)
@@ -381,13 +421,15 @@
 
 
 ;;;; Python
+
 (org-babel-do-load-languages
  'org-babel-load-languages
  '((emacs-lisp . t)
    (python . t)))
+
 ;;;;; default virtualenv
 (setenv "WORKON_HOME" "/home/garg/virtualenvs")
-(pyvenv-workon "django2")
+(pyvenv-workon "django3")
 
 ;;;;; elpy 
 (setq elpy-rpc-backend "jedi")
@@ -458,8 +500,12 @@
 ;;;; semantic completion
 
 (add-hook 'semantic-mode-hook #'et/semantic-remove-hooks)
+
 (setq semanticdb-default-save-directory "~/.emacs.d/semanticdb")
+
+
 (semantic-mode 1)
+
 ;; (global-semantic-idle-scheduler-mode 1)
 
 
@@ -489,7 +535,9 @@
 	  (lambda ()
 	    (set (make-local-variable 'compile-command)
 		 (format "make -k -f %s" (get-closest-pathname)))))
+
 (add-to-list 'compilation-finish-functions 'notify-compilation-result)
+
 (global-set-key (kbd "<f5>")
 		(lambda ()
 		  (interactive)
@@ -505,8 +553,9 @@
 ;; (setq outshine-org-style-global-cycling-at-bob-p t)
 ;; (setq outshine-startup-folded-p t)
 ;;;;; highlight "todo" keyword in any buffer
-(use-package hl-todo :config
-  (global-hl-todo-mode 1 ))
+
+;; (use-package hl-todo :config
+;;   (global-hl-todo-mode 1 ))
 
 (setq outshine-use-speed-commands t)
 
@@ -560,20 +609,36 @@
 (setq-default ff-other-file-alist 'my-cpp-other-file-alist)
 
 
+
 ;;; Keymaps
+
 ;;;; Misc global binds
 ;; new org journal entry
 
-(setq my-global-binds '(((kbd "<H-return>") 'org-journal-new-entry) ; new org-journal
-			((kbd "<M-ESC>") 'helper-reload-settings)) ; Reload settings quickly with M-ESC
-		       
+;; (setq my-global-binds '(((kbd "<H-return>") 'org-journal-new-entry) ; new org-journal
+;; 			((kbd "<M-ESC>") 'helper-reload-settings)) ; Reload settings quickly with M-ESC
 
+
+(global-set-key (kbd "<H-up>") 'my-up-font)
+(global-set-key (kbd "<H-down>") 'my-down-font)
+
+(global-set-key (kbd "<H-return>") 'org-journal-new-entry)
+
+
+;; quote
+;; (mapcar 'car my-global-binds)
 
 ;;;; Hyper wasd navigation (Outline/semantic)
+
 (global-set-key (kbd "H-w") 'outline-up-heading)
 (global-set-key (kbd "H-a") 'hyper-left)
 (global-set-key (kbd "H-s") 'hyper-down)
 (global-set-key (kbd "H-d") 'hyper-right)
+
+(global-set-key (kbd "C-H-d") 'senator-kill-tag)
+
+
+
 ;;;; rshift (F9) map
 ;; (global-set-key (kbd "<C-f9>") 'ace-jump-mode)
 
@@ -596,6 +661,8 @@
      (lambda()
        (interactive)
        (let ((current-prefix-arg 4)) (call-interactively 'helm-ag))))
+
+   (define-key rshiftmap (kbd "c") 'org-toggle-checkbox)
    
    (define-key rshiftmap [?\d] 'kill-whitespace)
    (define-key rshiftmap (kbd "<deletechar>") 'kill-whitespace)
@@ -626,13 +693,18 @@
    (define-key rshiftmap (kbd "2") 'rotate:even-vertical)
    (define-key rshiftmap (kbd "3") 'rotate:main-horizontal)
    (define-key rshiftmap (kbd "4") 'rotate:main-vertical)
-   (define-key rshiftmap (kbd "5") 'rotate:tiled)
+   (define-key rshiftmap (kbd "5") 'rotate:tiled) 
 
    (define-key rshiftmap (kbd "\]") (lambda () (interactive)
 				      (find-file "/ssh:garg@frezr.com:")))
+
+      (define-key rshiftmap (kbd "/") (lambda () (interactive)
+				      (find-file "/ssh:garg@alihyder.org:")))
+
    (define-key rshiftmap (kbd "\[") (lambda () (interactive)
 				      (find-file
 				       "/ssh:garg@frezr.com:pelican/content")))
+
    (define-key rshiftmap (kbd "p") (lambda () (interactive)
 				      (find-file
 				       "/ssh:garg@frezr.com:pelican/")))
@@ -735,8 +807,6 @@
  ("q" nil "cancel" :color blue)
  )
 
-(global-set-key (kbd "C-<f6>") 'hydra-outline/body)
-(global-set-key (kbd "<f6>") 'hydra-navigation/body)
 
 ;;;; Org mode 
 (with-eval-after-load "org"
@@ -793,7 +863,7 @@
 
 (global-set-key (kbd "C-c l") 'org-store-link)
 
-(global-set-key (kbd "C-x C-e") 'eval-sexp-or-region)
+;; (global-set-key (kbd "C-x C-e") 'eval-sexp-or-region)
 
 (global-set-key (kbd "<C-enter>") 'helm-org-rifle)
 
@@ -801,85 +871,103 @@
 (global-set-key [(control shift down)]  'move-line-down)
 
 
+    ;; (defhydra hydra-toggle (:color blue)
+    ;;   "toggle"
+    ;;   ("a" abbrev-mode "abbrev")
+    ;;   ("d" toggle-debug-on-error "debug")
+    ;;   ("f" auto-fill-mode "fill")
+    ;;   ("t" toggle-truncate-lines "truncate")
+    ;;   ("w" whitespace-mode "whitespace")
+    ;;   ("q" nil "cancel"))
+
+
+;; (hydra-toggle/body)
+
 ;;;; F1 hydra
-;;;;; F1-Main 
-(defhydra hydra-f1 (:color blue :timeout 12 :hint none)
+;;;;; F1-Main
+
+
+(defhydra hydra-helper-searcher (:color blue)
+  "W Finder"
+  ("<F1>" toggle-context-help "toggle")
+  ("2" webjump "webjump")
+  ("3" helm-info "info")
+  ("s" apropos "apropos")
+  ("d" helm-man-woman "man"))
+
+
+(defhydra hydra-launcher (:color blue :hint none)
   "
- +-( HYDRAS )^^---+-( SYMBOL )-----------------^^^^-+-( FIND INFO )----^^^^+-( MISC )--^^+
- | _1_ shortcuts  | _fd_  find-function (lisp)   ^^ | _dd_,_da_ apropos    | _a_ce window|
- | _2_ fonts      | _fx_  xref definition        ^^ | _df_ helpful      ^^ | _s_wap      |
- | _3_ yassnippet | _fr_  xref references        ^^ | _dt_ toggle help  ^^ | _k_ill-ring |
- | _4_ transpose  | _fg_  gtags (_<tab>_ resumes)   | _di_ info indices ^^ | _t_reeview  |
- | _5_ window     | _fo_  find string occurance  ^^ +-( FIND WEB  )----^^^^+ _b_ookmarks |
- | _r_ect         | _fm_  cquery member hierarchy^^ | _SPC_ surfraw     ^^ | _c_apture   |
- | _O_rg          | _ff_  find-files             ^^ | sear_x_           ^^ | _J_ournal   |
- | _A_genda       |                             ^^^^| _g_oogle          ^^ | _j_ournal   |
- |             ^^ | ^^                           ^^ | _w_ikipedia       ^^ | _S_earch    |
- | _<f3>_ macro   | _RET_ srefactor at point     ^^ | _W_ebjump         ^^ | _R_eload    |
- +-^^-------------+-^^^^----------------------------+-^^--------------^^---+-----------^^+
+Help               |  Web search                  |  Find 
+-------------------|------------------------------|------------------------
+<F1>: Toggle          _SPC_: Surfraw               ^^   _fx_ find def 
+   _1_: Shortcuts       _g_: Google                     _fr_ find ref
+   _2_: Apropos         _w_: Wikipedia                  _fg_ find gtags
+   _3_: Info            _x_: Searx                      _fo_ find multi-occur
+   _4_: Man             _<RET>_: webjump                _fm_ cquery member 
+   _5_: Helpful                                     ^^  _ff_ helm find files
+   _i_: Info finder
+   _`_: commentary
+
 "
-;;;;;; hydras,p
-("1" helper-hydra-shortcuts/body )
-;;("s" helper-hydra-shortcuts/body )
-("2" helper-hydra-fonts/body )
-("3" helper-hydra-yasnippet/body  )
-("4" helper-hydra-transpose/body )
-("5" helper-hydra-window/body  )
-("r" helper-hydra-rectangle/body   )
-("O" helper-hydra-org-utils/body )
-("A" helper-hydra-org-agenda/body   )
-("<f3>" helper-hydra-macro/body )
-;;;;;; find symbol 
-("fd" find-function)
-("fx" xref-find-definitions-other-window)
-("fr" xref-find-references)
-("fg" helm-gtags-dwim)
-("<tab>" helm-gtags-resume)
-("fo" helm-multi-occur-from-isearch) 
-("fm" cquery-member-hierarchy)
-("ff" helm-find-files)
-("RET" srefactor-refactor-at-point)
-;;;;;; find info
-("dd" apropos-documentation)
-("da" apropos)
-("dt" toggle-context-help)
-("df" helpful-at-point)
-("di" helm-info)
-;;;;;; web find
-("SPC" helm-surfraw)
-("x" helm-google-searx)
-("g" helm-google)
-("w" helm-wikipedia-suggest)
-("W" webjump)
-;;;;;; misc
-("a" ace-window)
-("s" ace-swap-window)
-("b" helm-bookmarks)
-("k" helm-show-kill-ring )
-("t" open-tree-view)
-("c" org-capture)
-("h" toggle-context-help)
+  ("<f1>"  toggle-context-help "toggle help")
 
-("J" org-journal-new-scheduled-entry)
-("j" org-journal-new-entry)
-("S" org-journal-search)
+  
+  ("1" helper-hydra-shortcuts/body "shortcuts" )
+  ("2" apropos "apropos")
+  ("3" helm-info "helm")
+  ("4" helm-man-woman "Man")
+  ("5" helpful-at-point)
+  ("i" info-finder "Info finder")
+  ("`" finder-commentary "Commentary")
+  
+  ("SPC" helm-surfraw)
+  ("x" helm-google-searx)
+  ("g" helm-google)
+  ("w" helm-wikipedia-suggest)
+  ("<RET>" webjump) 
 
-("<f1>" helm-M-x)
-("R" (helper-reload-settings) "Reload settings.org")
+  ("fx" xref-find-definitions-other-window "fx")
+  ("fr" xref-find-references)
+  ("fg" helm-gtags-dwim)
+  ("fo" helm-multi-occur-from-isearch) 
+  ("fm" cquery-member-hierarchy)
+  ("ff" helm-find-files)
+  
+  ("<tab>" helm-resume)
+  ("l" ace-window "ace window")
+  (";" ace-swap-window "swap window")
+  ("b" helm-bookmarks)
+  ("k" helm-show-kill-ring )
+  ("t" open-tree-view)
+  ("c" org-capture)
+  ("S" org-journal-search))
 
-;;;;;; hidden
-("K" save-buffers-kill-emacs)
 
-("H" (lambda ()  (interactive)
-       (org-cycle-hide-drawers 'all)))
-
-("BC" (lambda () (interactive)
-	(setq-local company-backends (remove 'company-capf company-backends))))
-
-("BS" (lambda () (interactive)
-	(setq-local company-backends (remove 'company-semantic company-backends)))))
+(global-unset-key (kbd "<F1>"))
 (global-unset-key (kbd "<f1>"))
-(global-set-key (kbd "<f1>") 'hydra-f1/body)
+(global-set-key (kbd "<f1>") 'hydra-launcher/body)
+
+
+;; ;;;;;; hidden
+;; ("K" save-buffers-kill-emacs)
+
+;; ("H" (lambda ()  (interactive)
+;;        (org-cycle-hide-drawers 'all)))
+
+;; ("BC" (lambda () (interactive)
+;; 	(setq-local company-backends (remove 'company-capf company-backends))))
+
+;; ("BS" (lambda () (interactive)
+;; 	(setq-local company-backends (remove 'company-semantic
+;; 					     company-backends)))))
+
+(global-set-key (kbd "<F1>") 'hydra-launcher/body)
+(global-set-key (kbd "<M-f1>") 'helm-apropos)
+(global-set-key (kbd "<H-f1>") 'helm-info-elisp)
+(global-set-key (kbd "<C-f1>") 'apropos)
+
+;;(global-set-key (kbd "<M-f1>") 'helm-man-woman)
 
 ;;;;; F1-shortcuts
 (defhydra helper-hydra-shortcuts (:color blue :hint nil)
@@ -907,12 +995,13 @@ _g_: general.org
   ("i" (insert (format "(setq company-backends '%s" company-backends)))
   ("<f2>" helper-reload-settings))
 
+(global-set-key (kbd "C-c C-e") 'eval-and-replace)
 
 (global-set-key (kbd "<H-kp-subtract>") 'text-scale-decrease)
 (global-set-key (kbd "<H-kp-add>") 'text-scale-increase)
+
+(global-set-key (kbd "<C-kp-add>") 'increment-number-at-point)
 (global-set-key (kbd "H-SPC") 'helm-all-mark-rings)
-
-
 
 ;;;;; Fill region 
 
@@ -923,13 +1012,53 @@ _g_: general.org
 
 (global-set-key (kbd "H-f") 'fill-region)
 
+(setq my-fontlist '("Neep-10"
+		    "Terminus-9"
+		    "lime-8"
+		    "Fira Mono Medium-9"
+		    "Iosevka-10:weight=Semibold"
+		    "Monaco-9"
+		    "Ubuntu Mono-11"
+		    "Space Mono-10" ))
+
+(defun my-up-font ()
+  (interactive)
+
+  (defvar my-selected-font 0 "init value")
+  
+  (if (> my-selected-font (- (list-length my-fontlist) 2))
+      (setq my-selected-font 0)
+    (setq my-selected-font (+ my-selected-font 1)))
+  
+  (set-default-font (nth my-selected-font my-fontlist))
+  
+  (message (format "%s %s" my-selected-font (nth my-selected-font my-fontlist))))
+
+(defun my-down-font ()
+  (interactive)
+
+  (defvar my-selected-font 0 "init value")
+  
+  (if (> 1 my-selected-font)
+      (setq my-selected-font (- (list-length my-fontlist) 2))
+    (setq my-selected-font (- my-selected-font 1)))
+  
+  (set-default-font (nth my-selected-font my-fontlist))
+  
+  (message (format "%s %s" my-selected-font (nth my-selected-font my-fontlist))))
+
+
 ;;;; rmenu 
 (global-set-key [f8] 'rmenumap)
 (progn
   (define-prefix-command 'rmenumap)
   
 ;;  (define-key rmenumap [f8] (lambda () (interactive) (org-show-current-heading-tidily)))
-(define-key rmenumap (kbd "<f8>") 'my-change-font)
+
+  
+  
+  (global-set-key (kbd "<f8>") 'avy-goto-word-0)
+  (define-key rmenumap (kbd "<f8>") 'my-change-font)
   (define-key rmenumap [right] (lambda() (interactive) (enlarge-window-horizontally 15)))
   (define-key rmenumap [left] (lambda() (interactive) (shrink-window-horizontally 15)))
   (define-key rmenumap [down] (lambda() (interactive) (enlarge-window 5)))
@@ -979,10 +1108,10 @@ _g_: general.org
     ("#CC9393" "#DFAF8F" "#F0DFAF" "#7F9F7F" "#BFEBBF" "#93E0E3" "#94BFF3" "#DC8CC3")))
  '(org-agenda-files
    (quote
-    ("/home/garg/org/notes/python.org" "/home/garg/org/notes/opengl.org" "/home/garg/org/archive.org" "/home/garg/org/discrete-math.org" "/home/garg/org/general.org" "/home/garg/org/taskplan.org" "/home/garg/org/journal/20180917.org")))
+    ("~/org/notes/linear-algebra.org" "/home/garg/org/notes/python.org" "/home/garg/org/notes/opengl.org" "/home/garg/org/archive.org" "/home/garg/org/discrete-math.org" "/home/garg/org/general.org" "/home/garg/org/taskplan.org" "/home/garg/org/journal/20180917.org")))
  '(org-bullets-bullet-list (quote ("◉" "○" "◦" "•")))
  '(org-journal-carryover-items "TODO=\"TODO\",LATER=\"LATER\",URGENT=\"URGENT\"")
- '(org-journal-date-prefix "#+TITLE: %x")
+ '(org-journal-date-prefix "* ")
  '(org-journal-dir "~/org/journal/")
  '(org-journal-enable-agenda-integration t)
  '(org-journal-file-format "%Y%m%d.org")
@@ -995,7 +1124,7 @@ _g_: general.org
  '(outline-minor-mode-prefix "M-#")
  '(package-selected-packages
    (quote
-    (hl-todo window-purpose unicode-input common-lisp-snippets lsp-html yasnippet-classic-snippets python-docstring org-projectile-helm pyvenv org-pdfview helpful powerline org-journal paredit clojure-mode react-snippets lsp-go srefactor-lisp helm-navi navi-mode use-package ace-jump-mode company-box lsp-ui company-lsp lsp-clangd cquery helm-firefox eyebrowse stickyfunc-enhance company-rtags helm-org-rifle helm-google company-web company-lua company-quickhelp helm-ag outshine neotree fold-dwim-org htmlize org-elisp-help elpa-mirror ecb helm-xref pelican-mode goto-last-change helm-company imenu-anywhere company-shell c-eldoc srefactor glsl-mode lua-mode undo-tree yasnippet-snippets rotate cmake-mode auctex headlong ace-window org-bullets autopair babel hydra which-key ox-reveal auto-yasnippet org-brain pc-bufsw buffer-stack helm-w3m sublime-themes go-mode gnugo go doremi-frm evil-magit vdiff-magit magit helm-dired-recent-dirs helm-dired-history ripgrep company-c-headers company projectile-speedbar sr-speedbar function-args helm-gtags projector projectile helm-projectile ag dumb-jump expand-region virtualenv flymake-lua xclip elpy fzf fasd bookmark+ helm-bm pdf-tools helm switch-window dracula-theme)))
+    (w3m aggressive-indent diff-hl py-autopep8 common-lisp-snippets lsp-html yasnippet-classic-snippets python-docstring org-projectile-helm pyvenv helpful powerline org-journal paredit react-snippets lsp-go srefactor-lisp helm-navi navi-mode use-package ace-jump-mode company-box lsp-ui company-lsp lsp-clangd cquery helm-firefox eyebrowse stickyfunc-enhance company-rtags helm-org-rifle helm-google company-web company-lua company-quickhelp helm-ag outshine neotree fold-dwim-org htmlize org-elisp-help elpa-mirror ecb helm-xref pelican-mode goto-last-change helm-company imenu-anywhere company-shell c-eldoc glsl-mode lua-mode undo-tree yasnippet-snippets rotate cmake-mode headlong ace-window org-bullets autopair babel hydra which-key ox-reveal auto-yasnippet org-brain pc-bufsw buffer-stack helm-w3m sublime-themes go-mode gnugo go doremi-frm evil-magit vdiff-magit magit helm-dired-recent-dirs helm-dired-history ripgrep company-c-headers company projectile-speedbar sr-speedbar function-args helm-gtags projector projectile helm-projectile ag dumb-jump expand-region virtualenv flymake-lua xclip elpy fzf fasd bookmark+ helm-bm pdf-tools helm switch-window dracula-theme)))
  '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
  '(pyvenv-exec-shell "/usr/bin/zsh")
  '(pyvenv-mode t)
@@ -1053,4 +1182,6 @@ _g_: general.org
 (put 'upcase-region 'disabled nil)
 (put 'list-timers 'disabled nil)
 (put 'narrow-to-region 'disabled nil)
+
+
 
