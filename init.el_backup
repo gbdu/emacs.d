@@ -1,5 +1,4 @@
 ;;; Reload settings
-
 ;;;; eval-and-replace ()
 (defun eval-and-replace ()
   "Replace the preceding sexp with its value."
@@ -24,8 +23,7 @@
 		    (find-file "~/.emacs.d/init.el")
 		    (check-parens))))))
 
-
-
+;;; Package management
 ;;;; Melpa
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
@@ -33,57 +31,39 @@
   (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
 (package-initialize)
 
-;;;; Use-package
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
-
-(setq use-package-always-ensure t)
-(require 'cl)
-(require 'php-mode)
-(
-add-hook 'php-mode-hook
-            '(lambda ()
-               (auto-complete-mode t)
-               (require 'ac-php)
-               (setq ac-sources  '(ac-source-php ) )
-               (yas-global-mode 1)
-               (ac-php-core-eldoc-setup ) ;; enable eldoc
-
-               (define-key php-mode-map  (kbd "C-]") 'ac-php-find-symbol-at-point)   ;goto define
-               (define-key php-mode-map  (kbd "C-t") 'ac-php-location-stack-back)    ;go back
-               ))
-
-;;; Package management
 ;;;; Require 
 
-;; (eval-when-compile
-;;   (add-to-list 'load-path "~/.emacs.d/manual-packages")
-;; )
+(eval-when-compile
+  (add-to-list 'load-path "~/.emacs.d/manual-packages")
 
-(add-to-list 'load-path "~/.emacs.d/manual-packages")
+  (require 'use-package)
+  (require 'helpers1)
+  (require 'ehelp)
+  (require 'recentf)
+  (require 'helper-hydras)
+  (require 'mouse)
+  (require 'scpaste)
+  (require 'semantic)
+  (require 'outshine))
 
-(require 'use-package)
 
-(require 'helpers1)
-
-(require 'ehelp)
-(require 'recentf)
-(require 'helper-hydras)
-(require 'mouse)
-(require 'scpaste)
-(require 'semantic)
-(require 'outshine)
 (require 'xclip)
 (require 'dash)
 (require 'compile)
 (require 'semantic/senator)
 
 
-;; (autoload 'senator-fold-tag-toggle "semantic/senator" nil t)
+(autoload 'senator-fold-tag-toggle "semantic/senator" nil t)
 
 ;; (require 'srefactor)
 ;; (require 'srefactor-lisp)
+
+;;;; Use-package
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(setq use-package-always-ensure t)
 
 
 ;;; Hydras 
@@ -148,12 +128,6 @@ add-hook 'php-mode-hook
 ;;;; Enable mouse
 (xterm-mouse-mode 1)
 
-;;;; Integrate X11 xclipboard with emacs (outline-on-heading-p)
-
-(setq x-select-enable-clipboard t) ;; Ctrl+c in Linux X11
-(setq x-select-enable-primary t) ;;selection in X11
-(xclip-mode 1)
-
 ;;;; Stop ESC ESC ESC from destroying windows
 (defadvice keyboard-escape-quit (around my-keyboard-escape-quit activate)
   (let (orig-one-window-p)
@@ -162,6 +136,11 @@ add-hook 'php-mode-hook
     (unwind-protect
 	ad-do-it
       (fset 'one-window-p (symbol-function 'orig-one-window-p)))))
+
+;;;; Integrate X11 xclipboard with emacs 
+(setq x-select-enable-clipboard t) ;; Ctrl+c in Linux X11
+(setq x-select-enable-primary t) ;;selection in X11
+(xclip-mode 1)
 
 ;;;; ag and case-fold-search
 (setq ag-highlight-search t)
@@ -389,7 +368,6 @@ add-hook 'php-mode-hook
       recentf-max-menu-items 300)
 
 (recentf-mode 1)
-
 (run-at-time (current-time) 140 (lambda ()
 				  (let ((inhibit-message t))
 				    (recentf-save-list))))
@@ -399,12 +377,14 @@ add-hook 'php-mode-hook
   :config (progn
 	    (setq fasd-enable-initial-prompt nil)
 	    (global-fasd-mode 1)))
-;;; Web
-;;;; DON'T Use proportional fonts in eww
-(setq shr-use-fonts nil)
 
+
+;;; Web
 ;;;; Default browser
 (setq browse-url-browser-function 'eww-browse-url)
+
+;;;; DON'T Use proportional fonts in eww
+(setq shr-use-fonts nil)
 
 ;;;; Tramp
 (setq tramp-default-method "ssh")
@@ -426,12 +406,9 @@ add-hook 'php-mode-hook
 
 ;;;; Python
 
-(require 'ob-php)
-
 (org-babel-do-load-languages
  'org-babel-load-languages
  '((emacs-lisp . t)
-   (php . t)
    (python . t)))
 
 ;;;;; default virtualenv
@@ -455,14 +432,6 @@ add-hook 'php-mode-hook
 	  company-show-numbers t
 	  company-dabbrev-time-limit 0.5
 	  company-transformers nil)))
-
-(require 'company-tern)
-
-(add-to-list 'company-backends 'company-tern)
-(add-hook 'js2-mode-hook (lambda ()
-                           (tern-mode)
-                           (company-mode)))
-
 ;;;; lsp-mode
 (use-package lsp-mode
   :config
@@ -499,18 +468,6 @@ add-hook 'php-mode-hook
              'company-yasnippet-or-completion
              company-active-map)))
 
-;;;; semantic completion
-
-;; (add-hook 'semantic-mode-hook #'et/semantic-remove-hooks)
-
-(setq semanticdb-default-save-directory "~/.emacs.d/semanticdb")
-
-
-(semantic-mode 1)
-
-;; (global-semantic-idle-scheduler-mode 1)
-
-
 ;;;; company-lsp
 (use-package company-lsp
   :init
@@ -523,6 +480,18 @@ add-hook 'php-mode-hook
         company-lsp-cache-candidates nil
         company-lsp-async t)
   )
+
+;;;; semantic completion
+
+(add-hook 'semantic-mode-hook #'et/semantic-remove-hooks)
+
+(setq semanticdb-default-save-directory "~/.emacs.d/semanticdb")
+
+
+(semantic-mode 1)
+
+;; (global-semantic-idle-scheduler-mode 1)
+
 
 ;;;; cquery
 (use-package cquery
@@ -569,10 +538,8 @@ add-hook 'php-mode-hook
 ;; (setq outshine-startup-folded-p t)
 ;;;;; highlight "todo" keyword in any buffer
 
-
-
-(use-package hl-todo :config
-  (global-hl-todo-mode 1 ))
+;;   (global-hl-todo-mode 1 ))
+;; (use-package hl-todo :config
 
 (setq outshine-use-speed-commands t)
 
@@ -592,15 +559,17 @@ add-hook 'php-mode-hook
 			   'outline-move-subtree-down)
 	    (local-set-key (kbd "<M-S-up>")
 			   'outline-move-subtree-up)
-	    ))
+	    
+))
 
 ;; Required for outshine
-(add-hook 'outline-minor-mode-hook 'outshine-hook-function)
-;; Enables outline-minor-mode for *ALL* programming buffers
-(add-hook 'prog-mode-hook 'outline-minor-mode)
+;; (add-hook 'outline-minor-mode-hook 'outshine-hook-function)
 
-;; (add-hook 'conf-mode-hook 'outshine-mode)
-;; (add-hook 'prog-mode-hook 'outshine-mode)
+(add-hook 'emacs-lisp-mode-hook 'outshine-mode)
+
+;; Enables outline-minor-mode for *ALL* programming buffers
+(add-hook 'conf-mode-hook 'outshine-mode)
+(add-hook 'prog-mode-hook 'outshine-mode)
 
 ;;;; autopair mode
 (use-package autopair
@@ -640,8 +609,8 @@ add-hook 'php-mode-hook
 
 ;;; Keymaps
 ;;;;; Hyper - Change fonts
-(global-set-key (kbd "<H-up>") 'my-up-font)
-(global-set-key (kbd "<H-down>") 'my-down-font)
+(global-set-key (kbd "<H-M-up>") 'my-up-font)
+(global-set-key (kbd "<H-M-down>") 'my-down-font)
 
 (global-set-key (kbd "<H-return>") 'org-journal-new-entry)
 
@@ -664,23 +633,6 @@ add-hook 'php-mode-hook
 
 (global-set-key (kbd "<C-H-right>") '(lambda() (interactive)
 				    (enlarge-window-horizontally 15)))
-
-
-
-;;;; Org mode 
-
-(global-set-key [C-kp-0] 'helm-org-rifle-org-directory)
-
-(with-eval-after-load "org"
-  (progn (define-key org-mode-map [kp-0] 'helm-org-rifle-org-directory)
-	 (define-key org-mode-map [M-up] 'outline-previous-heading)
-	 (define-key org-mode-map [M-down] 'outline-next-heading)
-	 (define-key org-mode-map [M-S-up] 'org-metaup)
-	 (define-key org-mode-map [M-S-down] 'org-metadown)
-	 (define-key org-mode-map [C-M-s-up] 'org-shiftmetaup)
-	 (define-key org-mode-map [C-M-s-down] 'org-shiftmetadown)
-	 (define-key org-mode-map [kp-end] 'org-clock-in)
-	 (define-key org-mode-map [kp-next] 'org-clock-out)))
 
 
 
@@ -853,6 +805,23 @@ add-hook 'php-mode-hook
  )
 
 
+;;;; Org mode 
+
+(global-set-key [C-kp-0] 'helm-org-rifle-org-directory)
+
+(with-eval-after-load "org"
+  (progn (define-key org-mode-map [kp-0] 'helm-org-rifle-org-directory)
+	 (define-key org-mode-map [M-up] 'outline-previous-heading)
+	 (define-key org-mode-map [M-down] 'outline-next-heading)
+	 (define-key org-mode-map [M-S-up] 'org-metaup)
+	 (define-key org-mode-map [M-S-down] 'org-metadown)
+	 (define-key org-mode-map [C-M-s-up] 'org-shiftmetaup)
+	 (define-key org-mode-map [C-M-s-down] 'org-shiftmetadown)
+	 (define-key org-mode-map [kp-end] 'org-clock-in)
+	 (define-key org-mode-map [kp-next] 'org-clock-out)))
+
+
+
 ;;;; bspc compatible window switching 
 ;; (global-set-key (kbd "<s-left>")
 ;; 		'(lambda()
@@ -950,7 +919,7 @@ add-hook 'php-mode-hook
   ("5" helpful-at-point :column "Help")
   ("`" helm-apropos "helm-apropos" :column "Help")
   ("r" info-finder "Info finder" :column "Help")
-  ("C" finder-commentary "Commentary" :column "Help")
+  ("c" finder-commentary "Commentary" :column "Help")
   ("df" describe-function "Describe fun" :column "Help")
   ("dv" describe-variable "Describe var" :column "Help")
   ("dk" describe-key "Describe key" :column "Help")
@@ -1146,7 +1115,7 @@ _g_: general.org
  '(outline-minor-mode-prefix "M-#")
  '(package-selected-packages
    (quote
-    (ac-php company-php php-refactor-mode js2-mode company-tern helm-navi outshine swiper-helm w3m aggressive-indent diff-hl py-autopep8 common-lisp-snippets lsp-html yasnippet-classic-snippets python-docstring pyvenv helpful powerline org-journal react-snippets lsp-go srefactor-lisp use-package ace-jump-mode company-box lsp-ui company-lsp lsp-clangd cquery helm-firefox eyebrowse stickyfunc-enhance company-rtags helm-org-rifle helm-google company-web company-lua company-quickhelp helm-ag fold-dwim-org htmlize org-elisp-help elpa-mirror ecb helm-xref pelican-mode goto-last-change helm-company imenu-anywhere company-shell c-eldoc glsl-mode lua-mode undo-tree yasnippet-snippets rotate cmake-mode headlong ace-window org-bullets autopair babel hydra which-key ox-reveal auto-yasnippet org-brain pc-bufsw buffer-stack helm-w3m sublime-themes go-mode gnugo go evil-magit vdiff-magit magit helm-dired-recent-dirs helm-dired-history ripgrep company-c-headers company projectile-speedbar sr-speedbar function-args helm-gtags projector ag dumb-jump expand-region virtualenv flymake-lua xclip elpy fzf fasd bookmark+ helm-bm pdf-tools helm dracula-theme)))
+    (swiper-helm w3m aggressive-indent diff-hl py-autopep8 common-lisp-snippets lsp-html yasnippet-classic-snippets python-docstring pyvenv helpful powerline org-journal react-snippets lsp-go srefactor-lisp helm-navi navi-mode use-package ace-jump-mode company-box lsp-ui company-lsp lsp-clangd cquery helm-firefox eyebrowse stickyfunc-enhance company-rtags helm-org-rifle helm-google company-web company-lua company-quickhelp helm-ag outshine fold-dwim-org htmlize org-elisp-help elpa-mirror ecb helm-xref pelican-mode goto-last-change helm-company imenu-anywhere company-shell c-eldoc glsl-mode lua-mode undo-tree yasnippet-snippets rotate cmake-mode headlong ace-window org-bullets autopair babel hydra which-key ox-reveal auto-yasnippet org-brain pc-bufsw buffer-stack helm-w3m sublime-themes go-mode gnugo go evil-magit vdiff-magit magit helm-dired-recent-dirs helm-dired-history ripgrep company-c-headers company projectile-speedbar sr-speedbar function-args helm-gtags projector ag dumb-jump expand-region virtualenv flymake-lua xclip elpy fzf fasd bookmark+ helm-bm pdf-tools helm dracula-theme)))
  '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
  '(pyvenv-exec-shell "/usr/bin/zsh")
  '(pyvenv-mode t)

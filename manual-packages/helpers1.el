@@ -1,7 +1,6 @@
 ;; * Required
 (require 'cl) 
 
-
 ;; * eval-sexp-or-region
 (defun eval-sexp-or-region ()
   "Eval sexp or region depending on whether or not a region is active"
@@ -32,6 +31,7 @@
   (condition-case nil
       (lsp-cquery-enable)
     (user-error nil)))
+
 
 ;; * Org
 ;; ** adjust region
@@ -156,6 +156,7 @@ family all work -- e.g., show-all; org-show-subtree; etc."
     (org-show-entry)
     (show-children)))
 
+
 ;; * File handling
 ;; ** Find sub dirs 
 (defun find-all-subdirectories(dir-list)
@@ -251,6 +252,7 @@ the name of FILE in the current directory, suitable for creation"
 			if (equal d root)
 			return nil))))
 
+
 ;; * Editing 
 ;; ** Newline without break of line
 ;; newline-without-break-of-line
@@ -322,6 +324,7 @@ the name of FILE in the current directory, suitable for creation"
       (or (looking-at "[0-9]+")
           (error "No number at point"))
       (replace-match (number-to-string (1+ (string-to-number (match-string 0))))))
+
 ;; * Hyper Navigation
 ;; ** Hyper navigation (semantic-outline)
 ;; ** extract-comment-from-tag  
@@ -361,7 +364,7 @@ the name of FILE in the current directory, suitable for creation"
 (defun hyper-right ()
   (interactive)
   (cond
-   ((org-at-heading-p) (outline-cycle))
+   ((org-at-heading-p) (outline-toggle-children))
    (t (senator-fold-tag-toggle))))
 
 ;; ** hyper-up  
@@ -387,6 +390,7 @@ the name of FILE in the current directory, suitable for creation"
 ;;	     (outline-up-heading 1)
 	     (outline-next-heading)
 	     (outline-show-entry)))))
+
 
 ;; * context help
 ;; help-window that will automatically update to
@@ -431,8 +435,6 @@ context-help to false"
         ((eq major-mode 'apropos-mode) (context-help) ad-do-it)
         (t ad-do-it)))
 
-
-
 ;; * pop local mark ring
 (defun xah-pop-local-mark-ring ()
   "  Call this repeatedly will cycle all positions in `mark-ring'.
@@ -447,7 +449,7 @@ context-help to false"
   (interactive)
   (kill-this-buffer) (delete-window))
 
-;; ;; * switch to previous buffer 
+;; * switch to previous buffer 
 (defun switch-to-previous-buffer ()
   "Repeated invocations toggle between the two most recently open buffers."
   (interactive) (switch-to-buffer (other-buffer (current-buffer) )))
@@ -500,6 +502,7 @@ buffer."
         (show-branches)))))
 
 
+
 ;; * set vim foldmarkers (aka "{{{")
 (defun set-vim-foldmarker (fmr)
       "Set Vim-type foldmarkers for the current buffer"
@@ -517,8 +520,11 @@ buffer."
                     (string-to-number (match-string 1))))))))
 
 ;; * insert date
-(defun insert-current-date () (interactive)
-       (insert (shell-command-to-string "date")))
+
+(defun insert-current-date ()
+  (interactive)
+  (insert (shell-command-to-string "date")))
+
 ;; * Move by window direction even inside tmux 
 (defun windmove-emacs-or-tmux(dir tmux-cmd)
   (interactive)
@@ -541,13 +547,13 @@ and set the focus back to Emacs frame"
   (select-frame-set-input-focus current-frame)
   )
 
-;; * Hideshow
 
-(defun display-code-line-counts (ov)
-  (when (eq 'code (overlay-get ov 'hs))
-    (overlay-put ov 'help-echo
-		 (buffer-substring (overlay-start ov)
-				   (overlay-end ov)))))
+;; * Hideshow
+;; (defun display-code-line-counts (ov)
+;;   (when (eq 'code (overlay-get ov 'hs))
+;;     (overlay-put ov 'help-echo
+;; 		 (buffer-substring (overlay-start ov)
+;; 				   (overlay-end ov)))))
 
 (defun toggle-selective-display (column)
   (interactive "P")
@@ -556,14 +562,14 @@ and set the focus back to Emacs frame"
        (unless selective-display
          (1+ (current-column))))))
 
-(defun toggle-hiding (column)
-  (interactive "P")
-  (if hs-minor-mode
-      (if (condition-case nil
-              (hs-toggle-hiding)
-            (error t))
-          (hs-show-all))
-    (toggle-selective-display column)))
+;; (defun toggle-hiding (column)
+;;   (interactive "P")
+;;   (if hs-minor-mode
+;;       (if (condition-case nil
+;;               (hs-toggle-hiding)
+;;             (error t))
+;;           (hs-show-all))
+;;     (toggle-selective-display column)))
 
 
 (defun toggle-window-zoom ()
@@ -601,20 +607,5 @@ and set the focus back to Emacs frame"
 ;; (register-alist)
 ;; (toggle-window-zoom)
 
-;; * org-todo
-;; Complemented with the mandatory shortcut:
-
-
-
 ;; * Provide 
 (provide 'helpers1)
-
-
-
-
-
-
-
-
-
-

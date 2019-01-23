@@ -1,0 +1,20 @@
+
+(apply (lambda (pair) ( (cdr pair) (car pair))) '([H-Return] org-journal-new-entry))
+
+(funcall (lambda (a b) (global-set-key a b) ) [H-1] 'org-journal-new-entry)
+
+( 'global-set-key (org-journal-new-entry [H-Return]))
+
+(helm-command-prefix)
+
+(apply 'global-set-key
+       `(,(kbd "H-2") org-journal-new-entry
+         ,(kbd "H-3") org-journal-new-entry))
+
+(+ 1 2)
+
+
+
+(funcall (lambda (n) (1+ n)) 1)
+
+
